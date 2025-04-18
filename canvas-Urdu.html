@@ -5,17 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paste, Crop, and Combine Image with Text</title>
 <style>
-/*
-@font-face {
-    font-family: 'Urdu Najd v3';
-    src: url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff2') format('woff2'),
-        url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-*/
-
 button {
   padding: 15px 32px;
   text-align: center;
@@ -109,6 +98,65 @@ button {
     let startX = 0;
     let startY = 0;
     let scale = 1;
+
+    // Function to handle the paste event
+    const handlePaste = (event) => {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image')) {
+          const blob = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            loadImage(event.target.result);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    };
+
+    // Function to load image onto the canvas
+    const loadImage = (src) => {
+      image = new Image();
+      image.onload = function() {
+        fitImageToCanvas();
+      };
+      image.src = src;
+    };
+
+    // Function to draw image on the canvas
+    const drawImage = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+    };
+
+    // Function to fit the image to the canvas by stretching
+    const fitByStretch = () => {
+      offsetX = 0;
+      offsetY = 0;
+
+      // Calculate canvas aspect ratio
+      const canvasAspectRatio = 1200 / 720;
+
+      // Calculate image aspect ratio
+      const imageAspectRatio = image.width / image.height;
+
+      if (imageAspectRatio > canvasAspectRatio) {
+        // Image is wider than canvas, fit to height
+        scale = 720 / image.height;
+        offsetX = (1200 - image.width * scale) / 2; // Center horizontally
+      } else {
+        // Image is taller than canvas, fit to width
+        scale = 1200 / image.width;
+        offsetY = (720 - image.height * scale) / 2; // Center vertically
+      }
+
+      drawImage();
+    };
+
+    // Function to handle the paste event and add image to the canvas
+    document.addEventListener('paste', handlePaste);
 
     // Function to generate the news canvas
     const generateNewsCanvas = () => {
