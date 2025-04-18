@@ -1,130 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Image Paste & Canvas Editor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Paste, Crop, and Combine Image with Text</title>
   <style>
-    body {
-      font-family: sans-serif;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
     }
-    #canvasContainer {
-      position: relative;
-      width: 1200px;
-      height: 720px;
+
+    #canvasContainer, #newsCanvasContainer {
       border: 2px solid black;
       margin-bottom: 20px;
+      position: relative;
     }
+
+    #canvasContainer {
+      width: 1200px;
+      height: 720px;
+    }
+
+    #newsCanvasContainer {
+      width: 1080px;
+      height: 1080px;
+    }
+
     canvas {
       display: block;
     }
-    #newsCanvas {
-      border: 2px solid black;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
+
+    #headlineInput {
+      width: 800px;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
+  <div id="canvasContainer">
+    <canvas id="canvas" width="1200" height="720"></canvas>
+  </div>
 
-<div id="canvasContainer">
-  <canvas id="canvas" width="1200" height="720"></canvas>
-</div>
+  <button id="stretchButton">Fit by Stretch</button>
+  <button id="fitLongestSideButton">Fit Longest Side</button>
+  <button id="centerButton">Center Image</button>
+  <button id="downloadCanvasButton">Download Resized Image</button>
 
-<input type="text" id="headlineInput" size="100" placeholder="Enter headline" />
-<button id="generateButton">Generate Final Image</button>
-<canvas id="newsCanvas" width="1080" height="1080"></canvas>
+  <br><br>
+  <input type="text" id="headlineInput" placeholder="Enter headline" dir="rtl">
+  <button id="generateButton">Generate</button>
 
-<script>
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const newsCanvas = document.getElementById('newsCanvas');
-  const newsCtx = newsCanvas.getContext('2d');
-  const headlineInput = document.getElementById('headlineInput');
-  const generateButton = document.getElementById('generateButton');
+  <div id="newsCanvasContainer">
+    <canvas id="newsCanvas" width="1080" height="1080"></canvas>
+  </div>
 
-  let image = null;
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const newsCanvas = document.getElementById('newsCanvas');
+    const newsCtx = newsCanvas.getContext('2d');
 
-  // 👇 Handle image paste from clipboard
-  document.addEventListener('paste', (e) => {
-    const items = (e.clipboardData || window.clipboardData).items;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        const blob = items[i].getAsFile();
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          image = new Image();
-          image.onload = function () {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-          };
-          image.src = event.target.result;
-        };
-        reader.readAsDataURL(blob);
+    let image = null;
+    let offsetX = 0, offsetY = 0, scale = 1;
+    let isDragging = false, startX = 0, startY = 0;
+
+    const backgroundImage = new Image();
+    backgroundImage.src = 'bg.jpeg';
+
+    const logoImage = new Image();
+    logoImage.src = 'aaj-logo.png';
+
+    document.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || window.clipboardData).items;
+      for (let item of items) {
+        if (item.type.includes('image')) {
+          const file = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = (evt) => loadImage(evt.target.result);
+          reader.readAsDataURL(file);
+        }
       }
+    });
+
+    function loadImage(src) {
+      image = new Image();
+      image.onload = () => {
+        fitOnLongestSide();
+      };
+      image.src = src;
     }
-  });
 
-  // 👇 Draw final image on newsCanvas
-  generateButton.addEventListener('click', () => {
-    if (!image) return alert("Paste an image first!");
+    function drawImage() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!image) return;
+      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+    }
 
-    newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-    
-    // Draw white background
-    newsCtx.fillStyle = 'white';
-    newsCtx.fillRect(0, 0, newsCanvas.width, newsCanvas.height);
+    function fitByStretch() {
+      offsetX = 0;
+      offsetY = 0;
+      const canvasAR = canvas.width / canvas.height;
+      const imgAR = image.width / image.height;
+      scale = (imgAR > canvasAR) ? canvas.height / image.height : canvas.width / image.width;
+      drawImage();
+    }
 
-    // Draw image from first canvas
-    const tempImage = new Image();
-    tempImage.onload = () => {
-      newsCtx.drawImage(tempImage, 25, 70, 1030, 611); // position image
-      newsCtx.strokeStyle = 'white'; // white border
-      newsCtx.lineWidth = 1;
-      newsCtx.strokeRect(25, 70, 1030, 611); // white border around image
+    function fitOnLongestSide() {
+      offsetX = 0;
+      offsetY = 0;
+      scale = (image.width > image.height)
+        ? canvas.width / image.width
+        : canvas.height / image.height;
+      drawImage();
+    }
 
-      // Draw text
-      const headline = headlineInput.value;
-      drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 800, 900, 60, 'bold', 'Arial', '#006163', 5);
-    };
-    tempImage.src = canvas.toDataURL();
-  });
+    function centerImage() {
+      offsetX = (canvas.width - image.width * scale) / 2;
+      offsetY = (canvas.height - image.height * scale) / 2;
+      drawImage();
+    }
 
-  // 👇 Function to draw wrapped text with 10% reduced size
-  function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-    const reducedFontSize = fontSize * 0.9; // Reduce font size by 10%
-    ctx.font = `${fontWeight} ${reducedFontSize}px ${fontFamily}`;
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = shadowOffset;
-    ctx.shadowOffsetY = shadowOffset;
-    ctx.direction = 'rtl';
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX - offsetX;
+      startY = e.clientY - offsetY;
+    });
 
-    const words = text.split(' ');
-    let line = '';
-    let lineHeight = reducedFontSize * 1.2;
-    let yPos = y;
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      offsetX = e.clientX - startX;
+      offsetY = e.clientY - startY;
+      drawImage();
+    });
 
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
+    document.addEventListener('mouseup', () => isDragging = false);
 
-      if (testWidth > maxWidth && i > 0) {
-        ctx.fillText(line.trim(), x, yPos);
-        line = words[i] + ' ';
-        yPos += lineHeight;
-      } else {
-        line = testLine;
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1.1 : 0.9;
+      scale *= delta;
+      drawImage();
+    });
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontFamily, color) {
+      ctx.font = `normal ${fontSize}px ${fontFamily}`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.direction = 'rtl';
+
+      const words = text.split(' ');
+      let line = '';
+      let yOffset = y;
+      const lineHeight = fontSize * 1.2;
+
+      for (let word of words) {
+        const testLine = line + word + ' ';
+        if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
+          ctx.fillText(line.trim(), x, yOffset);
+          line = word + ' ';
+          yOffset += lineHeight;
+        } else {
+          line = testLine;
+        }
       }
+      ctx.fillText(line.trim(), x, yOffset);
     }
-    ctx.fillText(line.trim(), x, yPos);
-  }
-</script>
+
+    function generateNewsCanvas() {
+      if (!image) return alert("Paste an image first!");
+      const headline = document.getElementById('headlineInput').value;
+      newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+      newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+
+      const canvasImage = new Image();
+      canvasImage.onload = () => {
+        // Draw white border
+        newsCtx.fillStyle = "white";
+        newsCtx.fillRect(24, 69, 1032, 613);
+
+        // Draw canvas image inside border
+        newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+
+        // Logo
+        newsCtx.drawImage(logoImage, newsCanvas.width - 125, 90, 115, 115);
+
+        // Headline (10% smaller font size)
+        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 54, 'Arial', '#006163');
+      };
+      canvasImage.src = canvas.toDataURL('image/png');
+    }
+
+    function downloadCanvas() {
+      const link = document.createElement('a');
+      link.download = 'resized.webp';
+      link.href = canvas.toDataURL('image/webp', 0.9);
+      link.click();
+    }
+
+    document.getElementById('generateButton').addEventListener('click', generateNewsCanvas);
+    document.getElementById('downloadCanvasButton').addEventListener('click', downloadCanvas);
+    document.getElementById('stretchButton').addEventListener('click', fitByStretch);
+    document.getElementById('fitLongestSideButton').addEventListener('click', fitOnLongestSide);
+    document.getElementById('centerButton').addEventListener('click', centerImage);
+  </script>
 </body>
 </html>
