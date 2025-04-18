@@ -5,311 +5,265 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paste, Crop, and Combine Image with Text</title>
 <style>
-
-
-/*
 @font-face {
-    font-family: 'Urdu Najd v3';
-    src: url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff2') format('woff2'),
-        url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Urdu Najd v3';
+  src: url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff2') format('woff2'),
+       url('https://rawcdn.githack.com/marifanjum/smcard/9565fdf62f7bb3c9a85e4c71ea02845d6ad30e7d/UrduNajdv3.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
-*/
 
 button {
   padding: 15px 32px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 18px;  
-  marigin: 10px; 
+  font-size: 18px;
+  margin: 10px;
 }
-	
-  #canvasContainer {
-    position: relative;
-    width: 1200px;
-    height: 720px;
-    border: 2px solid black;
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
 
-  #canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    cursor: move;
-  }
+#canvasContainer {
+  position: relative;
+  width: 1200px;
+  height: 720px;
+  border: 2px solid black;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
 
-  #newsCanvasContainer {
-    width: 1080px;
-    height: 1080px;
-    border: 2px solid black;
-    position: relative;
-  }
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: move;
+}
 
-  #headlineText {
-    position: absolute;
-    top: 700px;
-    width: 100%;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    font-family: Arial;
-    color: black;
-  }
+#newsCanvasContainer {
+  width: 1080px;
+  height: 1080px;
+  border: 2px solid black;
+  position: relative;
+}
 
-  #outputCanvas {
-    border: 1px solid black;
-  }
+#headlineText {
+  position: absolute;
+  top: 700px;
+  width: 100%;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  font-family: Arial;
+  color: black;
+}
+
+#outputCanvas {
+  border: 1px solid black;
+}
 </style>
 </head>
 <body>
-  <div id="canvasContainer">
-    <canvas id="canvas" width="1200" height="720"></canvas>
-  </div>
-	<button id="stretchButton">Fit by Stretch</button>
-  <button id="fitLongestSideButton">Fit on Longest Side</button>
-  <button id="centerButton">Center Image</button>
-  <button id="downloadCanvasButton">Download resized story image </button>
-  
-  <br />
-  <br />
-  <input type="text" size="100" dir="rtl" id="headlineInput" placeholder="Enter headline">
-  <button id="generateButton">Generate</button>
-  <br />
-  
-  
-  
-  
+<div id="canvasContainer">
+  <canvas id="canvas" width="1200" height="720"></canvas>
+</div>
+<button id="stretchButton">Fit by Stretch</button>
+<button id="fitLongestSideButton">Fit on Longest Side</button>
+<button id="centerButton">Center Image</button>
+<button id="downloadCanvasButton">Download resized story image</button>
+<br><br>
+<input type="text" size="100" dir="rtl" id="headlineInput" placeholder="Enter headline">
+<button id="generateButton">Generate</button>
+<br><br>
+<div id="newsCanvasContainer">
+  <canvas id="newsCanvas" width="1080" height="1080"></canvas>
+  <div id="headlineText"></div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const newsCanvas = document.getElementById('newsCanvas');
+const newsCtx = newsCanvas.getContext('2d');
+const headlineInput = document.getElementById('headlineInput');
+const generateButton = document.getElementById('generateButton');
+const stretchButton = document.getElementById('stretchButton');
+const fitLongestSideButton = document.getElementById('fitLongestSideButton');
+const centerButton = document.getElementById('centerButton');
+const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 
-  <div id="newsCanvasContainer">
-    <canvas id="newsCanvas" width="1080" height="1080"></canvas>
-    <div id="headlineText"></div>
-  </div>
+const backgroundImage = new Image();
+backgroundImage.src = 'bg.jpeg';
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const newsCanvas = document.getElementById('newsCanvas');
-    const newsCtx = newsCanvas.getContext('2d');
-    const headlineInput = document.getElementById('headlineInput');
-    const generateButton = document.getElementById('generateButton');
-    const stretchButton = document.getElementById('stretchButton');
-    const fitLongestSideButton = document.getElementById('fitLongestSideButton');
-    const centerButton = document.getElementById('centerButton');
-    const downloadCanvasButton = document.getElementById('downloadCanvasButton');
-    
+const logoImage = new Image();
+logoImage.src = 'aaj-logo.png';
 
-    const backgroundImage = new Image();
-    backgroundImage.src = 'bg.jpeg'; // Hard-coded path for background image
+let image = null;
+let offsetX = 0;
+let offsetY = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let scale = 1;
 
-    const logoImage = new Image();
-    logoImage.src = 'aaj-logo.png'; // Hard-coded path for logo image
-
-    let image = null;
-    let offsetX = 0;
-    let offsetY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let scale = 1;
-
-    // Function to handle paste event
-    const handlePaste = event => {
-      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-      for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image')) {
-          const blob = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            loadImage(event.target.result);
-          };
-          reader.readAsDataURL(blob);
-          break;
-        }
-      }
-    };
-
-    // Function to load image onto canvas
-    const loadImage = src => {
-      image = new Image();
-      image.onload = function() {
-        fitImageToCanvas();
+const handlePaste = event => {
+  const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+  for (let index in items) {
+    const item = items[index];
+    if (item.kind === 'file' && item.type.includes('image')) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        loadImage(event.target.result);
       };
-      image.src = src;
-    };
+      reader.readAsDataURL(blob);
+      break;
+    }
+  }
+};
 
-    // Function to draw image on canvas
-    const drawImage = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
-    };
+const loadImage = src => {
+  image = new Image();
+  image.onload = function() {
+    fitImageToCanvas();
+  };
+  image.src = src;
+};
 
-    // Function to fit image to canvas by stretching
-    const fitByStretch = () => {
+const drawImage = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+};
+
+const fitByStretch = () => {
   offsetX = 0;
   offsetY = 0;
-
-  // Calculate canvas aspect ratio
   const canvasAspectRatio = 1200 / 720;
-
-  // Calculate image aspect ratio
   const imageAspectRatio = image.width / image.height;
-
   if (imageAspectRatio > canvasAspectRatio) {
-    // Image is wider than canvas, fit to height
     scale = 720 / image.height;
-    offsetX = (1200 - image.width * scale) / 2; // Center horizontally
+    offsetX = (1200 - image.width * scale) / 2;
   } else {
-    // Image is taller than canvas, fit to width
     scale = 1200 / image.width;
-    offsetY = (720 - image.height * scale) / 2; // Center vertically
+    offsetY = (720 - image.height * scale) / 2;
   }
-
   drawImage();
 };
 
-    // Function to fit image to canvas on the longest side
-    const fitOnLongestSide = () => {
-      offsetX = 0;
-      offsetY = 0;
-      if (image.width > image.height) {
-        scale = canvas.width / image.width;
-      } else {
-        scale = canvas.height / image.height;
-      }
-      drawImage();
-    };
+const fitOnLongestSide = () => {
+  offsetX = 0;
+  offsetY = 0;
+  if (image.width > image.height) {
+    scale = canvas.width / image.width;
+  } else {
+    scale = canvas.height / image.height;
+  }
+  drawImage();
+};
 
-    // Function to center image on canvas
-    const centerImage = () => {
-      offsetX = (canvas.width - image.width * scale) / 2;
-      offsetY = (canvas.height - image.height * scale) / 2;
-      drawImage();
-    };
+const centerImage = () => {
+  offsetX = (canvas.width - image.width * scale) / 2;
+  offsetY = (canvas.height - image.height * scale) / 2;
+  drawImage();
+};
 
-    // Function to handle mouse down event
-    const handleMouseDown = event => {
-      isDragging = true;
-      startX = event.clientX - offsetX;
-      startY = event.clientY - offsetY;
-    };
+const handleMouseDown = event => {
+  isDragging = true;
+  startX = event.clientX - offsetX;
+  startY = event.clientY - offsetY;
+};
 
-    // Function to handle mouse move event
-    const handleMouseMove = event => {
-      if (!isDragging) return;
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      offsetX = mouseX - startX;
-      offsetY = mouseY - startY;
-      drawImage();
-    };
+const handleMouseMove = event => {
+  if (!isDragging) return;
+  const mouseX = event.clientX;
+  const mouseY = event.clientY;
+  offsetX = mouseX - startX;
+  offsetY = mouseY - startY;
+  drawImage();
+};
 
-    // Function to handle mouse up event
-    const handleMouseUp = () => {
-      isDragging = false;
-    };
+const handleMouseUp = () => {
+  isDragging = false;
+};
 
-    // Function to handle mouse wheel event
-    const handleMouseWheel = event => {
-      event.preventDefault();
-      const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
-      const zoomSpeed = 0.1;
-      const zoomFactor = 1 + zoomSpeed * delta;
-      scale *= zoomFactor;
-      drawImage();
-    };
+const handleMouseWheel = event => {
+  event.preventDefault();
+  const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
+  const zoomSpeed = 0.1;
+  const zoomFactor = 1 + zoomSpeed * delta;
+  scale *= zoomFactor;
+  drawImage();
+};
 
-    // Function to generate the news canvas
-    const generateNewsCanvas = () => {
-      const headline = headlineInput.value;
-	
-      newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+const generateNewsCanvas = () => {
+  const headline = headlineInput.value;
+  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+  const canvasImage = new Image();
+  canvasImage.onload = function() {
+    newsCtx.fillStyle = 'white';
+    newsCtx.fillRect(25 - 5, 70 - 5, 1030 + 10, 611 + 10); // white border
+    newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+    document.fonts.load('60px "Urdu Najd v3"').then(() => {
+      drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd v3', '#006163', 5);
+    });
+    const logoX = newsCanvas.width - 115;
+    const logoY = 90;
+    newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+  };
+  canvasImage.src = canvas.toDataURL('image/png');
+};
 
-      // Draw the canvas content image
-      const canvasImage = new Image();
-	    
-	canvasImage.onload = function() {
-	newsCtx.fillStyle = 'white'; // Set border color
-        newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = shadowOffset;
+  ctx.shadowOffsetY = shadowOffset;
+  ctx.direction = 'rtl';
 
-        // Draw the headline
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd v3', '#006163', 5);
+  const words = text.split(' ');
+  let line = '';
+  let yPos = y;
+  const lineHeight = fontSize * 0.8;
+  let btMargin = 100;
 
-        // Draw the logo image
-        const logoX = newsCanvas.width - 115 - 0; // 10px from right
-        const logoY = 90; // 10px from top
-        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-      };
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
 
-
-      canvasImage.src = canvas.toDataURL('image/png');
-    };
-
-    // Function to draw wrapped text
-    function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center'; // Center align text horizontally
-      ctx.textBaseline = 'bottom'; // Align text baseline to the bottom
-      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)'; // Shadow color
-      ctx.shadowBlur = 0; // Shadow blur
-      ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-      ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
-      ctx.direction = 'rtl'; // Set text direction to RTL
-
-      const words = text.split(' ');
-      let line = '';
-      let yPos = y;
-      const lineHeight = fontSize * 0.8; // Line height matches font size
-      let btMargin = 100;
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
-
-        if (testWidth > maxWidth && i > 0) {
-          ctx.fillText(line.trim(), x, yPos);
-          line = words[i] + ' ';
-          yPos += lineHeight; // Move to the next line
-        } else {
-          line = testLine;
-          btMargin = 60;
-        }
-      }
-
-      ctx.fillText(line.trim(), x, yPos + btMargin); // Add bottom margin
+    if (testWidth > maxWidth && i > 0) {
+      ctx.fillText(line.trim(), x, yPos);
+      line = words[i] + ' ';
+      yPos += lineHeight;
+    } else {
+      line = testLine;
+      btMargin = 60;
     }
+  }
+  ctx.fillText(line.trim(), x, yPos + btMargin);
+}
 
-    // Function to download canvas as WebP image
-    const downloadCanvas = () => {
-      const link = document.createElement('a');
-      link.download = 'resized.webp';
-      link.href = canvas.toDataURL('image/webp', 0.5);
-      link.click();
-    };
+const downloadCanvas = () => {
+  const link = document.createElement('a');
+  link.download = 'resized.webp';
+  link.href = canvas.toDataURL('image/webp', 0.5);
+  link.click();
+};
 
-    // Function to download news canvas as WebP image
-    
-
-    // Add event listeners
-    document.addEventListener('paste', handlePaste);
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    canvas.addEventListener('mousewheel', handleMouseWheel);
-    canvas.addEventListener('DOMMouseScroll', handleMouseWheel);
-    generateButton.addEventListener('click', generateNewsCanvas);
-    stretchButton.addEventListener('click', fitByStretch);
-    fitLongestSideButton.addEventListener('click', fitOnLongestSide);
-    centerButton.addEventListener('click', centerImage);
-    downloadCanvasButton.addEventListener('click', downloadCanvas);
-    
-  </script>
+document.addEventListener('paste', handlePaste);
+canvas.addEventListener('mousedown', handleMouseDown);
+canvas.addEventListener('mousemove', handleMouseMove);
+document.addEventListener('mouseup', handleMouseUp);
+canvas.addEventListener('mousewheel', handleMouseWheel);
+canvas.addEventListener('DOMMouseScroll', handleMouseWheel);
+generateButton.addEventListener('click', generateNewsCanvas);
+stretchButton.addEventListener('click', fitByStretch);
+fitLongestSideButton.addEventListener('click', fitOnLongestSide);
+centerButton.addEventListener('click', centerImage);
+downloadCanvasButton.addEventListener('click', downloadCanvas);
+</script>
 </body>
 </html>
