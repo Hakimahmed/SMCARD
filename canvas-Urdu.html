@@ -81,7 +81,7 @@
   #headlineInput {
     width: 80%;
     padding: 12px;
-    font-size: 40px;
+    font-size: 30px;
     border: 1px solid #ccc;
     border-radius: 6px;
     margin: 20px auto;
@@ -265,7 +265,7 @@
       canvasImage.onload = function() {
         newsCtx.fillStyle = 'white';
         newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 48, 'normal', 'Urdu Najd V3', '#006163', 4);
+        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd V3', '#006163', 4);
         const logoX = newsCanvas.width - 115;
         const logoY = 90;
         newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
@@ -287,7 +287,7 @@
       const words = text.split(' ');
       let line = '';
       let yPos = y;
-      const lineHeight = fontSize * 2.2;
+      const lineHeight = fontSize * 0.8;
 
       for (let i = 0; i < words.length; i++) {
         const testLine = line + words[i] + ' ';
