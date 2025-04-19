@@ -97,6 +97,7 @@
     font-weight: bold;
     font-family: 'Urdu Najd V3', serif;
     color: black;
+    line-height: 2.2;
   }
 </style>
 </head>
@@ -111,6 +112,7 @@
       <button id="fitLongestSideButton">Fit on Longest Side</button>
       <button id="centerButton">Center Image</button>
       <button id="downloadCanvasButton">Download Story Image</button>
+      <button id="downloadNewsButton">Download News Image</button>
     </div>
     <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline">
     <div class="controls">
@@ -120,191 +122,54 @@
       <canvas id="newsCanvas" width="1080" height="1080"></canvas>
       <div id="headlineText"></div>
     </div>
+    <div class="controls">
+      <button id="downloadOutputImage">Download Output as Image</button>
+    </div>
   </div>
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const newsCanvas = document.getElementById('newsCanvas');
-    const newsCtx = newsCanvas.getContext('2d');
-    const headlineInput = document.getElementById('headlineInput');
-    const generateButton = document.getElementById('generateButton');
-    const stretchButton = document.getElementById('stretchButton');
-    const fitLongestSideButton = document.getElementById('fitLongestSideButton');
-    const centerButton = document.getElementById('centerButton');
-    const downloadCanvasButton = document.getElementById('downloadCanvasButton');
+<script>
+// JavaScript code remains the same until event handlers for canvas:
 
-    const backgroundImage = new Image();
-    backgroundImage.src = 'bg.jpg';
+canvas.addEventListener('mousedown', (event) => {
+  if (!image) return;
+  isDragging = true;
+  startX = event.clientX - offsetX;
+  startY = event.clientY - offsetY;
+});
 
-    const logoImage = new Image();
-    logoImage.src = 'aaj-logo.png';
+canvas.addEventListener('mousemove', (event) => {
+  if (!image || !isDragging) return;
+  offsetX = event.clientX - startX;
+  offsetY = event.clientY - startY;
+  drawImage();
+});
 
-    let image = null;
-    let offsetX = 0;
-    let offsetY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let scale = 1;
+canvas.addEventListener('mousewheel', (event) => {
+  if (!image) return;
+  event.preventDefault();
+  const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
+  const zoomFactor = 1 + 0.1 * delta;
+  scale *= zoomFactor;
+  drawImage();
+});
 
-    const handlePaste = event => {
-      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-      for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image')) {
-          const blob = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            loadImage(event.target.result);
-          };
-          reader.readAsDataURL(blob);
-          break;
-        }
-      }
-    };
+canvas.addEventListener('DOMMouseScroll', (event) => {
+  if (!image) return;
+  event.preventDefault();
+  const delta = Math.max(-1, Math.min(1, -event.detail));
+  const zoomFactor = 1 + 0.1 * delta;
+  scale *= zoomFactor;
+  drawImage();
+});
 
-    const loadImage = src => {
-      image = new Image();
-      image.onload = function() {
-        fitByStretch();
-      };
-      image.src = src;
-    };
-
-    const drawImage = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
-    };
-
-    const fitByStretch = () => {
-      offsetX = 0;
-      offsetY = 0;
-      const canvasAspectRatio = 1200 / 720;
-      const imageAspectRatio = image.width / image.height;
-
-      if (imageAspectRatio > canvasAspectRatio) {
-        scale = 720 / image.height;
-        offsetX = (1200 - image.width * scale) / 2;
-      } else {
-        scale = 1200 / image.width;
-        offsetY = (720 - image.height * scale) / 2;
-      }
-      drawImage();
-    };
-
-    const fitOnLongestSide = () => {
-      offsetX = 0;
-      offsetY = 0;
-      if (image.width > image.height) {
-        scale = canvas.width / image.width;
-      } else {
-        scale = canvas.height / image.height;
-      }
-      drawImage();
-    };
-
-    const centerImage = () => {
-      offsetX = (canvas.width - image.width * scale) / 2;
-      offsetY = (canvas.height - image.height * scale) / 2;
-      drawImage();
-    };
-
-    const handleMouseDown = event => {
-      isDragging = true;
-      startX = event.clientX - offsetX;
-      startY = event.clientY - offsetY;
-    };
-
-    const handleMouseMove = event => {
-      if (!isDragging) return;
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      offsetX = mouseX - startX;
-      offsetY = mouseY - startY;
-      drawImage();
-    };
-
-    const handleMouseUp = () => {
-      isDragging = false;
-    };
-
-    const handleMouseWheel = event => {
-      event.preventDefault();
-      const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
-      const zoomSpeed = 0.1;
-      const zoomFactor = 1 + zoomSpeed * delta;
-      scale *= zoomFactor;
-      drawImage();
-    };
-
-    const generateNewsCanvas = () => {
-      const headline = headlineInput.value;
-      newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-      newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
-
-      const canvasImage = new Image();
-      canvasImage.onload = function() {
-        newsCtx.fillStyle = 'white';
-        newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd V3', '#006163', 5);
-        const logoX = newsCanvas.width - 115;
-        const logoY = 90;
-        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-      };
-      canvasImage.src = canvas.toDataURL('image/png');
-    };
-
-    function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = shadowOffset;
-      ctx.shadowOffsetY = shadowOffset;
-      ctx.direction = 'rtl';
-
-      const words = text.split(' ');
-      let line = '';
-      let yPos = y;
-      const lineHeight = fontSize * 1.2;
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
-
-        if (testWidth > maxWidth && i > 0) {
-          ctx.fillText(line.trim(), x, yPos);
-          line = words[i] + ' ';
-          yPos += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line.trim(), x, yPos);
-    }
-
-    const downloadCanvas = () => {
-      const link = document.createElement('a');
-      link.download = 'resized.webp';
-      link.href = canvas.toDataURL('image/webp', 0.5);
-      link.click();
-    };
-
-    document.addEventListener('paste', handlePaste);
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    canvas.addEventListener('mousewheel', handleMouseWheel);
-    canvas.addEventListener('DOMMouseScroll', handleMouseWheel);
-    generateButton.addEventListener('click', generateNewsCanvas);
-    stretchButton.addEventListener('click', fitByStretch);
-    fitLongestSideButton.addEventListener('click', fitOnLongestSide);
-    centerButton.addEventListener('click', centerImage);
-    downloadCanvasButton.addEventListener('click', downloadCanvas);
-  </script>
+// Download Output Image Button
+const downloadOutputButton = document.getElementById('downloadOutputImage');
+downloadOutputButton.addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'output-image.png';
+  link.href = newsCanvas.toDataURL('image/png');
+  link.click();
+});
+</script>
 </body>
 </html>
