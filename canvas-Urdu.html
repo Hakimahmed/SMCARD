@@ -86,7 +86,7 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
-    font-family: 'Urdu Typesetting', serif; /* Updated font */
+    font-family: 'Urdu Najd V3', serif; /* Use Urdu Najd for headline */
   }
 
   #headlineText {
@@ -96,10 +96,21 @@
     text-align: center;
     font-size: 24px;
     font-weight: bold;
-    font-family: 'Urdu Typesetting', serif; /* Updated font */
+    font-family: 'Urdu Najd V3', serif; /* Urdu Najd for headline text */
     color: black;
     line-height: 2.2; /* Increased line height */
   }
+
+  .download-buttons {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  #downloadCanvasButton, #downloadNewsButton {
+    display: inline-block;
+    margin: 10px;
+  }
+
 </style>
 </head>
 <body>
@@ -112,8 +123,6 @@
       <button id="stretchButton">Fit by Stretch</button>
       <button id="fitLongestSideButton">Fit on Longest Side</button>
       <button id="centerButton">Center Image</button>
-      <button id="downloadCanvasButton">Download Story Image</button>
-      <button id="downloadNewsButton">Download News Image</button>
     </div>
     <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline">
     <div class="controls">
@@ -122,6 +131,11 @@
     <div id="newsCanvasContainer">
       <canvas id="newsCanvas" width="1080" height="1080"></canvas>
       <div id="headlineText"></div>
+    </div>
+
+    <div class="download-buttons">
+      <button id="downloadCanvasButton">Download Story Image</button>
+      <button id="downloadNewsButton">Download News Image</button>
     </div>
   </div>
 
@@ -251,7 +265,7 @@
       canvasImage.onload = function() {
         newsCtx.fillStyle = 'white';
         newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 48, 'normal', 'Urdu Typesetting', '#006163', 4);
+        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 48, 'normal', 'Urdu Najd V3', '#006163', 4);
         const logoX = newsCanvas.width - 115;
         const logoY = 90;
         newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
