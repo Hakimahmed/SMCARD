@@ -140,11 +140,11 @@
 
     const backgroundImage = new Image();
     backgroundImage.crossOrigin = 'anonymous';
-    backgroundImage.src = 'bg.jpg';
+    backgroundImage.src = 'bg.jpg'; // Ensure this file is correctly located
 
     const logoImage = new Image();
     logoImage.crossOrigin = 'anonymous';
-    logoImage.src = 'aaj-logo.png';
+    logoImage.src = 'aaj-logo.png'; // Ensure this file is correctly located
 
     let image = null;
     let offsetX = 0;
@@ -163,6 +163,7 @@
           const blob = item.getAsFile();
           const reader = new FileReader();
           reader.onload = function(event) {
+            console.log('Image pasted:', event.target.result);
             loadImage(event.target.result);
           };
           reader.readAsDataURL(blob);
@@ -172,20 +173,30 @@
     };
 
     const loadImage = src => {
+      console.log('Loading image...');
       image = new Image();
       image.crossOrigin = 'anonymous';
       image.onload = function() {
+        console.log('Image loaded');
         fitByStretch();
       };
       image.src = src;
     };
 
     const drawImage = () => {
+      if (!image) {
+        console.error('No image to draw');
+        return;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
     };
 
     const fitByStretch = () => {
+      if (!image) {
+        console.error('No image to stretch');
+        return;
+      }
       offsetX = 0;
       offsetY = 0;
       const canvasAspectRatio = 1200 / 720;
@@ -202,6 +213,10 @@
     };
 
     const fitOnLongestSide = () => {
+      if (!image) {
+        console.error('No image to fit');
+        return;
+      }
       offsetX = 0;
       offsetY = 0;
       if (image.width > image.height) {
@@ -213,6 +228,10 @@
     };
 
     const centerImage = () => {
+      if (!image) {
+        console.error('No image to center');
+        return;
+      }
       offsetX = (canvas.width - image.width * scale) / 2;
       offsetY = (canvas.height - image.height * scale) / 2;
       drawImage();
@@ -220,6 +239,11 @@
 
     const generateNewsCanvas = () => {
       const headline = headlineInput.value;
+      if (!headline) {
+        console.error('No headline entered');
+        return;
+      }
+      console.log('Generating news graphic with headline:', headline);
       newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
       newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
@@ -284,11 +308,6 @@
     };
 
     document.addEventListener('paste', handlePaste);
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    canvas.addEventListener('mousewheel', handleMouseWheel);
-    canvas.addEventListener('DOMMouseScroll', handleMouseWheel);
     generateButton.addEventListener('click', generateNewsCanvas);
     stretchButton.addEventListener('click', fitByStretch);
     fitLongestSideButton.addEventListener('click', fitOnLongestSide);
