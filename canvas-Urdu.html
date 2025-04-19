@@ -86,6 +86,7 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
+    font-family: 'Urdu Typesetting', serif; /* Updated font */
   }
 
   #headlineText {
@@ -95,9 +96,9 @@
     text-align: center;
     font-size: 24px;
     font-weight: bold;
-    font-family: 'Urdu Najd V3', serif;
+    font-family: 'Urdu Typesetting', serif; /* Updated font */
     color: black;
-    line-height: 2.2;
+    line-height: 2.2; /* Increased line height */
   }
 </style>
 </head>
@@ -122,54 +123,178 @@
       <canvas id="newsCanvas" width="1080" height="1080"></canvas>
       <div id="headlineText"></div>
     </div>
-    <div class="controls">
-      <button id="downloadOutputImage">Download Output as Image</button>
-    </div>
   </div>
 
-<script>
-// JavaScript code remains the same until event handlers for canvas:
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const newsCanvas = document.getElementById('newsCanvas');
+    const newsCtx = newsCanvas.getContext('2d');
+    const headlineInput = document.getElementById('headlineInput');
+    const generateButton = document.getElementById('generateButton');
+    const stretchButton = document.getElementById('stretchButton');
+    const fitLongestSideButton = document.getElementById('fitLongestSideButton');
+    const centerButton = document.getElementById('centerButton');
+    const downloadCanvasButton = document.getElementById('downloadCanvasButton');
+    const downloadNewsButton = document.getElementById('downloadNewsButton');
 
-canvas.addEventListener('mousedown', (event) => {
-  if (!image) return;
-  isDragging = true;
-  startX = event.clientX - offsetX;
-  startY = event.clientY - offsetY;
-});
+    const backgroundImage = new Image();
+    backgroundImage.crossOrigin = 'anonymous';
+    backgroundImage.src = 'bg.jpg';
 
-canvas.addEventListener('mousemove', (event) => {
-  if (!image || !isDragging) return;
-  offsetX = event.clientX - startX;
-  offsetY = event.clientY - startY;
-  drawImage();
-});
+    const logoImage = new Image();
+    logoImage.crossOrigin = 'anonymous';
+    logoImage.src = 'aaj-logo.png';
 
-canvas.addEventListener('mousewheel', (event) => {
-  if (!image) return;
-  event.preventDefault();
-  const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
-  const zoomFactor = 1 + 0.1 * delta;
-  scale *= zoomFactor;
-  drawImage();
-});
+    let image = null;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let scale = 1;
+    let imageCounter = 1; // For automatic numbering
 
-canvas.addEventListener('DOMMouseScroll', (event) => {
-  if (!image) return;
-  event.preventDefault();
-  const delta = Math.max(-1, Math.min(1, -event.detail));
-  const zoomFactor = 1 + 0.1 * delta;
-  scale *= zoomFactor;
-  drawImage();
-});
+    const handlePaste = event => {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image')) {
+          const blob = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            loadImage(event.target.result);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    };
 
-// Download Output Image Button
-const downloadOutputButton = document.getElementById('downloadOutputImage');
-downloadOutputButton.addEventListener('click', () => {
-  const link = document.createElement('a');
-  link.download = 'output-image.png';
-  link.href = newsCanvas.toDataURL('image/png');
-  link.click();
-});
-</script>
+    const loadImage = src => {
+      image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.onload = function() {
+        fitByStretch();
+      };
+      image.src = src;
+    };
+
+    const drawImage = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+    };
+
+    const fitByStretch = () => {
+      offsetX = 0;
+      offsetY = 0;
+      const canvasAspectRatio = 1200 / 720;
+      const imageAspectRatio = image.width / image.height;
+
+      if (imageAspectRatio > canvasAspectRatio) {
+        scale = 720 / image.height;
+        offsetX = (1200 - image.width * scale) / 2;
+      } else {
+        scale = 1200 / image.width;
+        offsetY = (720 - image.height * scale) / 2;
+      }
+      drawImage();
+    };
+
+    const fitOnLongestSide = () => {
+      offsetX = 0;
+      offsetY = 0;
+      if (image.width > image.height) {
+        scale = canvas.width / image.width;
+      } else {
+        scale = canvas.height / image.height;
+      }
+      drawImage();
+    };
+
+    const centerImage = () => {
+      offsetX = (canvas.width - image.width * scale) / 2;
+      offsetY = (canvas.height - image.height * scale) / 2;
+      drawImage();
+    };
+
+    const generateNewsCanvas = () => {
+      const headline = headlineInput.value;
+      newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+      newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+
+      const canvasImage = new Image();
+      canvasImage.onload = function() {
+        newsCtx.fillStyle = 'white';
+        newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 48, 'normal', 'Urdu Typesetting', '#006163', 4);
+        const logoX = newsCanvas.width - 115;
+        const logoY = 90;
+        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+      };
+      canvasImage.src = canvas.toDataURL('image/png');
+    };
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
+      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = shadowOffset;
+      ctx.shadowOffsetY = shadowOffset;
+      ctx.direction = 'rtl';
+
+      const words = text.split(' ');
+      let line = '';
+      let yPos = y;
+      const lineHeight = fontSize * 2.2;
+
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+
+        if (testWidth > maxWidth && i > 0) {
+          ctx.fillText(line.trim(), x, yPos);
+          line = words[i] + ' ';
+          yPos += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line.trim(), x, yPos);
+    }
+
+    const downloadCanvas = () => {
+      const link = document.createElement('a');
+      link.download = `card_${imageCounter}.webp`;  // Automatic numbering
+      link.href = canvas.toDataURL('image/webp', 0.5);
+      link.click();
+      imageCounter++; // Increment image number after download
+    };
+
+    const downloadNews = () => {
+      const link = document.createElement('a');
+      link.download = `news_card_${imageCounter}.webp`;  // Automatic numbering
+      link.href = newsCanvas.toDataURL('image/webp', 0.95);
+      link.click();
+      imageCounter++; // Increment image number after download
+    };
+
+    document.addEventListener('paste', handlePaste);
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mousewheel', handleMouseWheel);
+    canvas.addEventListener('DOMMouseScroll', handleMouseWheel);
+    generateButton.addEventListener('click', generateNewsCanvas);
+    stretchButton.addEventListener('click', fitByStretch);
+    fitLongestSideButton.addEventListener('click', fitOnLongestSide);
+    centerButton.addEventListener('click', centerImage);
+    downloadCanvasButton.addEventListener('click', downloadCanvas);
+    downloadNewsButton.addEventListener('click', downloadNews);
+  </script>
 </body>
 </html>
