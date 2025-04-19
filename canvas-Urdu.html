@@ -1,3 +1,6 @@
+Here's the updated version of your code with `bg.jpeg` renamed to `bg.jpg`:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,8 +8,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paste, Crop, and Combine Image with Text</title>
 <style>
-
-
 /*
 @font-face {
     font-family: 'Urdu Najd v3';
@@ -81,10 +82,6 @@ button {
   <button id="generateButton">Generate</button>
   <br />
   
-  
-  
-  
-
   <div id="newsCanvasContainer">
     <canvas id="newsCanvas" width="1080" height="1080"></canvas>
     <div id="headlineText"></div>
@@ -104,7 +101,7 @@ button {
     
 
     const backgroundImage = new Image();
-    backgroundImage.src = 'bg.jpeg'; // Hard-coded path for background image
+    backgroundImage.src = 'bg.jpg'; // Updated to bg.jpg
 
     const logoImage = new Image();
     logoImage.src = 'aaj-logo.png'; // Hard-coded path for logo image
@@ -294,9 +291,6 @@ button {
       link.click();
     };
 
-    // Function to download news canvas as WebP image
-    
-
     // Add event listeners
     document.addEventListener('paste', handlePaste);
     canvas.addEventListener('mousedown', handleMouseDown);
@@ -309,11 +303,7 @@ button {
     fitLongestSideButton.addEventListener('click', fitOnLongestSide);
     centerButton.addEventListener('click', centerImage);
     downloadCanvasButton.addEventListener('click', downloadCanvas);
-    const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg'; // Changed to bg.jpg
-
+    
   </script>
-
-  
 </body>
 </html>
