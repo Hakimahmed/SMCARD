@@ -110,6 +110,36 @@
     display: inline-block;
     margin: 10px;
   }
+button:disabled {
+  background-color: #f5b5b5; /* light red */
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.7;
+  border: none;
+}
+  button {
+  padding: 12px 24px;
+  margin: 5px;
+  border: none;
+  border-radius: 6px;
+  background-color: #006163;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #004d4d;
+  transform: scale(1.02); /* Little zoom on hover */
+}
+
+button:disabled {
+  background-color: #f5b5b5;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
 </style>
 </head>
@@ -125,7 +155,7 @@
       <button id="centerButton">Center Image</button>
     </div>
    <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
-    <div id="wordCounter" style="text-align: center; margin-top: 8px; font-size: 18px; color: #006163;">Words: 0 / 13</div>
+   <div id="wordCounter" style="text-align: center; margin-top: 8px; font-size: 18px; color: #006163;">Words: 0 / 13</div>
     <div class="controls">
       <button id="generateButton">Generate News Graphic</button>
     </div>
@@ -331,15 +361,28 @@
     downloadNewsButton.addEventListener('click', downloadNews);
 
 
-   function limitWords(input, maxWords) {
+  function limitWords(input, maxWords) {
   let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
-  if (words.length > maxWords) {
-    input.value = words.slice(0, maxWords).join(' ');
-    words = words.slice(0, maxWords);
-  }
-  document.getElementById('wordCounter').textContent = `Words: ${words.length} / ${maxWords}`;
-}
+  const counter = document.getElementById('wordCounter');
+  const generateButton = document.getElementById('generateButton');
 
+function limitWords(input, maxWords) {
+  let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
+  const counter = document.getElementById('wordCounter');
+  const generateButton = document.getElementById('generateButton');
+
+  if (words.length > maxWords) {
+    input.style.borderColor = 'red';
+    counter.style.color = 'red';
+    generateButton.disabled = true;
+  } else {
+    input.style.borderColor = '#006163';
+    counter.style.color = '#006163';
+    generateButton.disabled = false;
+  }
+
+  counter.textContent = `Words: ${words.length} / ${maxWords}`;
+}
   </script>
 </body>
 </html>
