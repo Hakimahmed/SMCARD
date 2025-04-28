@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Crop & News Graphic Generator</title>
+<title>News Graphic Generator - Final Fixed Version</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
@@ -12,54 +12,29 @@
   body { background: #f4f6f8; padding: 30px; color: #333; }
   h1 { text-align: center; margin-bottom: 30px; color: #006163; }
   .container { max-width: 1280px; margin: 0 auto; }
-  #canvasContainer, #newsCanvasContainer {
-    background-color: #fff; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    margin-bottom: 30px; overflow: hidden; border: 1px solid #ccc;
-  }
+  #canvasContainer, #newsCanvasContainer { background: #fff; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 30px; border: 1px solid #ccc; overflow: hidden; }
   #canvasContainer { width: 1200px; height: 720px; }
   #newsCanvasContainer { width: 1080px; height: 1080px; position: relative; }
   canvas { display: block; margin: auto; }
   .controls { text-align: center; margin-bottom: 30px; }
-  button {
-    padding: 12px 24px; margin: 5px; border: none; border-radius: 6px;
-    background-color: #006163; color: white; font-size: 16px; cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover { background-color: #004d4d; }
-  #headlineInput {
-    width: 80%; padding: 12px; font-size: 30px; border: 2px solid #ccc;
-    border-radius: 6px; margin: 20px auto; display: block;
-    font-family: 'Urdu Najd V3', serif;
-  }
-  @keyframes pulseRed {
-    0% { border-color: red; }
-    50% { border-color: #ff6666; }
-    100% { border-color: red; }
-  }
-  .pulse-border { animation: pulseRed 1s infinite; }
+  button { padding: 12px 24px; margin: 5px; border: none; border-radius: 6px; background: #006163; color: white; font-size: 16px; cursor: pointer; transition: background-color 0.3s ease; }
+  button:hover { background: #004d4d; }
+  #headlineInput { width: 80%; padding: 12px; font-size: 30px; border: 1px solid #ccc; border-radius: 6px; margin: 20px auto; display: block; font-family: 'Urdu Najd V3', serif; }
   #wordCounter { text-align: center; margin-top: 8px; font-size: 18px; color: #006163; }
   .download-buttons { text-align: center; margin-top: 20px; }
 </style>
 </head>
-
 <body>
 <div class="container">
-  <h1>Image Crop & News Graphic Generator</h1>
+  <h1>News Graphic Generator</h1>
 
   <div id="canvasContainer">
     <canvas id="canvas" width="1200" height="720"></canvas>
   </div>
 
   <div class="controls">
-    <button id="stretchButton">Fit by Stretch</button>
-    <button id="fitLongestSideButton">Fit on Longest Side</button>
-    <button id="centerButton">Center Image</button>
-  </div>
-
-  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
-  <div id="wordCounter">Words: 0 / 13</div>
-
-  <div class="controls">
+    <input type="text" id="headlineInput" dir="rtl" placeholder="Enter Headline (max 13 words)">
+    <div id="wordCounter">Words: 0 / 13</div>
     <button id="generateButton" disabled>Generate News Graphic</button>
   </div>
 
@@ -68,7 +43,6 @@
   </div>
 
   <div class="download-buttons">
-    <button id="downloadCanvasButton">Download Story Image</button>
     <button id="downloadNewsButton">Download News Image</button>
   </div>
 </div>
@@ -78,169 +52,97 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const newsCanvas = document.getElementById('newsCanvas');
 const newsCtx = newsCanvas.getContext('2d');
-
 const headlineInput = document.getElementById('headlineInput');
 const generateButton = document.getElementById('generateButton');
-const stretchButton = document.getElementById('stretchButton');
-const fitLongestSideButton = document.getElementById('fitLongestSideButton');
-const centerButton = document.getElementById('centerButton');
-const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
+const wordCounter = document.getElementById('wordCounter');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg';
+backgroundImage.src = 'bg.jpg'; // Your background image
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png';
+logoImage.src = 'aaj-logo.png'; // Your logo image
 
-let image = null;
-let offsetX = 0;
-let offsetY = 0;
-let scale = 1;
+let pastedImage = null;
 
-document.addEventListener('paste', (e) => {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].kind === 'file' && items[i].type.includes('image')) {
-      const blob = items[i].getAsFile();
+// Paste image support
+window.addEventListener('paste', function(e) {
+  const items = e.clipboardData.items;
+  for (let item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      const file = item.getAsFile();
       const reader = new FileReader();
-      reader.onload = (event) => { loadImage(event.target.result); };
-      reader.readAsDataURL(blob);
+      reader.onload = function(event) {
+        pastedImage = new Image();
+        pastedImage.onload = function() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(pastedImage, 0, 0, canvas.width, canvas.height);
+        }
+        pastedImage.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
     }
   }
 });
 
-function loadImage(src) {
-  image = new Image();
-  image.onload = () => { fitByStretch(); };
-  image.src = src;
-}
-
-function drawImage() {
-  if (!image) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
-}
-
-function fitByStretch() {
-  if (!image) return;
-  offsetX = 0;
-  offsetY = 0;
-  const canvasAspectRatio = 1200 / 720;
-  const imageAspectRatio = image.width / image.height;
-  if (imageAspectRatio > canvasAspectRatio) {
-    scale = 720 / image.height;
-    offsetX = (1200 - image.width * scale) / 2;
+// Word limit logic
+headlineInput.addEventListener('input', function() {
+  const words = headlineInput.value.trim().split(/\s+/);
+  wordCounter.textContent = `Words: ${words.length} / 13`;
+  if (words.length > 13) {
+    headlineInput.style.borderColor = 'red';
+    generateButton.disabled = true;
   } else {
-    scale = 1200 / image.width;
-    offsetY = (720 - image.height * scale) / 2;
+    headlineInput.style.borderColor = '#ccc';
+    generateButton.disabled = words.length === 0;
   }
-  drawImage();
-}
+});
 
-function fitOnLongestSide() {
-  if (!image) return;
-  if (image.width > image.height) {
-    scale = canvas.width / image.width;
-  } else {
-    scale = canvas.height / image.height;
-  }
-  drawImage();
-}
-
-function centerImage() {
-  if (!image) return;
-  offsetX = (canvas.width - image.width * scale) / 2;
-  offsetY = (canvas.height - image.height * scale) / 2;
-  drawImage();
-}
-
-function limitWords(input, maxWords) {
-  let words = input.value.trim().split(/\s+/);
-  const wordCounter = document.getElementById('wordCounter');
-  if (words.length > maxWords) {
-    words = words.slice(0, maxWords);
-    input.value = words.join(' ');
-  }
-  if (words.length >= maxWords) {
-    input.classList.add('pulse-border');
-  } else {
-    input.classList.remove('pulse-border');
-  }
-  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
-  generateButton.disabled = words.length === 0;
-}
-
-function drawMixedHeadline(ctx, text, x, y) {
-  ctx.textAlign = 'center';
+function drawMixedHeadline(ctx, text, centerX, centerY) {
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  let currentX = x;
-  ctx.font = "bold 60px 'Urdu Najd V3'";
-  
-  const centerX = newsCanvas.width / 2;
+
   let totalWidth = 0;
-  
-  // First measure total width
   for (let char of text) {
-    if (/\d/.test(char)) {
-      ctx.font = "bold 60px Arial";
-    } else {
-      ctx.font = "bold 60px 'Urdu Najd V3'";
-    }
+    ctx.font = /\d/.test(char) ? "bold 70px Arial" : "bold 70px 'Urdu Najd V3'";
     totalWidth += ctx.measureText(char).width;
   }
-  
-  currentX = centerX - (totalWidth / 2); // Center adjust
-  
-  // Now draw each character
+
+  let currentX = centerX - totalWidth / 2;
+  ctx.fillStyle = "#006163";
+
   for (let char of text) {
-    if (/\d/.test(char)) {
-      ctx.font = "bold 60px Arial";
-    } else {
-      ctx.font = "bold 60px 'Urdu Najd V3'";
-    }
-    ctx.fillText(char, currentX, y);
+    ctx.font = /\d/.test(char) ? "bold 70px Arial" : "bold 70px 'Urdu Najd V3'";
+    ctx.fillText(char, currentX, centerY);
     currentX += ctx.measureText(char).width;
   }
 }
 
 function generateNewsCanvas() {
   let headline = headlineInput.value;
-  if (!headline) return;
+  if (!headline || !pastedImage) return;
+
   newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
   newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
-  const canvasImage = new Image();
-  canvasImage.onload = () => {
-    newsCtx.drawImage(canvasImage, 0, 0, newsCanvas.width, newsCanvas.height);
-    
-    // Now draw headline
-    newsCtx.fillStyle = "#ffffff";
-    drawMixedHeadline(newsCtx, headline, newsCanvas.width/2, 200);
+  // Draw story image
+  newsCtx.drawImage(pastedImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
-    // Draw logo if needed
-    newsCtx.drawImage(logoImage, 20, 20, 200, 100);
-  };
-  canvasImage.src = canvas.toDataURL();
+  // Draw headline
+  drawMixedHeadline(newsCtx, headline, newsCanvas.width / 2, 850);
+
+  // Draw logo
+  newsCtx.drawImage(logoImage, 750, 50, 300, 150);
 }
 
-stretchButton.onclick = fitByStretch;
-fitLongestSideButton.onclick = fitOnLongestSide;
-centerButton.onclick = centerImage;
-generateButton.onclick = generateNewsCanvas;
-downloadCanvasButton.onclick = () => {
+generateButton.addEventListener('click', generateNewsCanvas);
+
+downloadNewsButton.addEventListener('click', function() {
   const link = document.createElement('a');
-  link.download = 'story-image.png';
-  link.href = canvas.toDataURL();
-  link.click();
-};
-downloadNewsButton.onclick = () => {
-  const link = document.createElement('a');
-  link.download = 'news-image.png';
+  link.download = 'news-graphic.png';
   link.href = newsCanvas.toDataURL();
   link.click();
-};
+});
 </script>
-
 </body>
 </html>
