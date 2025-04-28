@@ -86,7 +86,7 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
-    font-family: 'Urdu Najd V3', serif;
+    font-family: 'Urdu Najd V3', serif; /* Use Urdu Najd for headline */
   }
 
   #headlineText {
@@ -96,9 +96,9 @@
     text-align: center;
     font-size: 40px;
     font-weight: bold;
-    font-family: 'Urdu Najd V3', serif;
+    font-family: 'Urdu Najd V3', serif; /* Urdu Najd for headline text */
     color: black;
-    line-height: 0.8;
+    line-height: 0.8; /* Increased line height */
   }
 
   .download-buttons {
@@ -109,6 +109,13 @@
   #downloadCanvasButton, #downloadNewsButton {
     display: inline-block;
     margin: 10px;
+  }
+
+  #wordCounter {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 18px;
+    color: #006163;
   }
 
 </style>
@@ -124,16 +131,15 @@
       <button id="fitLongestSideButton">Fit on Longest Side</button>
       <button id="centerButton">Center Image</button>
     </div>
-   <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
- <div id="wordCounter" style="text-align: center; margin-top: 8px; font-size: 18px; color: #006163;">Words: 0 / 13</div>
+    <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
+    <div id="wordCounter">Words: 0 / 13</div>
     <div class="controls">
-      <button id="generateButton">Generate News Graphic</button>
+      <button id="generateButton" disabled>Generate News Graphic</button>
     </div>
     <div id="newsCanvasContainer">
       <canvas id="newsCanvas" width="1080" height="1080"></canvas>
       <div id="headlineText"></div>
     </div>
-
     <div class="download-buttons">
       <button id="downloadCanvasButton">Download Story Image</button>
       <button id="downloadNewsButton">Download News Image</button>
@@ -155,36 +161,67 @@
 
     const backgroundImage = new Image();
     backgroundImage.crossOrigin = 'anonymous';
-    backgroundImage.src = 'bg.jpg'; 
+    backgroundImage.src = 'bg.jpg'; // Ensure this file is correctly located
 
     const logoImage = new Image();
     logoImage.crossOrigin = 'anonymous';
-    logoImage.src = 'aaj-logo.png'; 
+    logoImage.src = 'aaj-logo.png'; // Ensure this file is correctly located
 
     let image = null;
     let offsetX = 0;
     let offsetY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
     let scale = 1;
 
+    const handlePaste = event => {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image')) {
+          const blob = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            console.log('Image pasted:', event.target.result);
+            loadImage(event.target.result);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    };
+
     const loadImage = src => {
+      console.log('Loading image...');
       image = new Image();
+      image.crossOrigin = 'anonymous';
       image.onload = function() {
+        console.log('Image loaded');
         fitByStretch();
       };
       image.src = src;
     };
 
     const drawImage = () => {
-      if (!image) return;
+      if (!image) {
+        console.error('No image to draw');
+        return;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
     };
 
     const fitByStretch = () => {
+      if (!image) {
+        console.error('No image to stretch');
+        return;
+      }
       offsetX = 0;
       offsetY = 0;
       const canvasAspectRatio = 1200 / 720;
       const imageAspectRatio = image.width / image.height;
+
       if (imageAspectRatio > canvasAspectRatio) {
         scale = 720 / image.height;
         offsetX = (1200 - image.width * scale) / 2;
@@ -195,18 +232,47 @@
       drawImage();
     };
 
+    const fitOnLongestSide = () => {
+      if (!image) {
+        console.error('No image to fit');
+        return;
+      }
+      offsetX = 0;
+      offsetY = 0;
+      if (image.width > image.height) {
+        scale = canvas.width / image.width;
+      } else {
+        scale = canvas.height / image.height;
+      }
+      drawImage();
+    };
+
+    const centerImage = () => {
+      if (!image) {
+        console.error('No image to center');
+        return;
+      }
+      offsetX = (canvas.width - image.width * scale) / 2;
+      offsetY = (canvas.height - image.height * scale) / 2;
+      drawImage();
+    };
+
     const generateNewsCanvas = () => {
-      const headline = headlineInput.value;
-      if (!headline) return;
+      const headline = headlineInput.value.trim();
+      if (!headline) {
+        alert('Please enter a headline!');
+        return;
+      }
+
+      console.log('Generating news graphic with headline:', headline);
 
       newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
       newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
       const canvasImage = new Image();
       canvasImage.onload = function() {
-        newsCtx.fillStyle = 'white';
         newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd V3', '#006163', 4);
+        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'bold', 'Urdu Najd V3', '#006163', 4);
         const logoX = newsCanvas.width - 115;
         const logoY = 90;
         newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
@@ -223,7 +289,7 @@
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = shadowOffset;
       ctx.shadowOffsetY = shadowOffset;
-      ctx.direction = 'rtl';
+      ctx.direction = 'rtl'; // Right to left for Urdu
 
       const words = text.split(' ');
       let line = '';
@@ -246,35 +312,33 @@
       ctx.fillText(line.trim(), x, yPos);
     }
 
-    const limitWords = (input, maxWords) => {
-      let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
-      const counter = document.getElementById('wordCounter');
-      const generateButton = document.getElementById('generateButton');
+    const downloadCanvas = () => {
+      const link = document.createElement('a');
+      link.download = `card_${Date.now()}.webp`;  // Use timestamp for unique names
+      link.href = canvas.toDataURL('image/webp', 0.5);
+      link.click();
+    };
 
-      if (words.length > maxWords) {
-        input.style.borderColor = 'red';
-        counter.style.color = 'red';
-        generateButton.disabled = true;
-        generateButton.style.opacity = 0.5;
-        generateButton.style.cursor = 'not-allowed';
-      } else {
-        input.style.borderColor = '#006163';
-        counter.style.color = '#006163';
-        generateButton.disabled = false;
-        generateButton.style.opacity = 1;
-        generateButton.style.cursor = 'pointer';
-      }
-
-      counter.textContent = `Words: ${words.length} / ${maxWords}`;
+    const downloadNews = () => {
+      const link = document.createElement('a');
+      link.download = `news_card_${Date.now()}.webp`;
+      link.href = newsCanvas.toDataURL('image/webp', 0.95);
+      link.click();
     };
 
     document.addEventListener('paste', handlePaste);
-    generateButton.addEventListener('click', generateNewsCanvas);
     stretchButton.addEventListener('click', fitByStretch);
     fitLongestSideButton.addEventListener('click', fitOnLongestSide);
     centerButton.addEventListener('click', centerImage);
+    generateButton.addEventListener('click', generateNewsCanvas);
     downloadCanvasButton.addEventListener('click', downloadCanvas);
     downloadNewsButton.addEventListener('click', downloadNews);
+
+    headlineInput.addEventListener('input', function() {
+      const wordCount = headlineInput.value.split(' ').length;
+      document.getElementById('wordCounter').textContent = `Words: ${wordCount} / 13`;
+      generateButton.disabled = wordCount > 13; // Disable button if words exceed limit
+    });
   </script>
 </body>
 </html>
