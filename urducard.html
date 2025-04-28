@@ -150,7 +150,7 @@ button:disabled {
       <button id="centerButton">Center Image</button>
     </div>
    <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
-   <div id="wordCounter" style="text-align: center; margin-top: 8px; font-size: 18px; color: #006163;">Words: 0 / 13</div>
+ <div id="wordCounter" style="text-align: center; margin-top: 8px; font-size: 18px; color: #006163;">Words: 0 / 13</div>
     <div class="controls">
       <button id="generateButton">Generate News Graphic</button>
     </div>
@@ -366,18 +366,28 @@ function limitWords(input, maxWords) {
   const counter = document.getElementById('wordCounter');
   const generateButton = document.getElementById('generateButton');
 
+ function limitWords(input, maxWords) {
+  let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
+  const counter = document.getElementById('wordCounter');
+  const generateButton = document.getElementById('generateButton');
+
   if (words.length > maxWords) {
     input.style.borderColor = 'red';
     counter.style.color = 'red';
     generateButton.disabled = true;
+    generateButton.style.opacity = 0.5; // visually show disabled
+    generateButton.style.cursor = 'not-allowed';
   } else {
     input.style.borderColor = '#006163';
     counter.style.color = '#006163';
     generateButton.disabled = false;
+    generateButton.style.opacity = 1;
+    generateButton.style.cursor = 'pointer';
   }
 
   counter.textContent = `Words: ${words.length} / ${maxWords}`;
 }
+
   </script>
 </body>
 </html>
