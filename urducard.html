@@ -124,7 +124,7 @@
       <button id="fitLongestSideButton">Fit on Longest Side</button>
       <button id="centerButton">Center Image</button>
     </div>
-    <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline">
+   <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
     <div class="controls">
       <button id="generateButton">Generate News Graphic</button>
     </div>
@@ -328,6 +328,15 @@
     centerButton.addEventListener('click', centerImage);
     downloadCanvasButton.addEventListener('click', downloadCanvas);
     downloadNewsButton.addEventListener('click', downloadNews);
+
+
+    function limitWords(input, maxWords) {
+  let words = input.value.trim().split(/\s+/);
+  if (words.length > maxWords) {
+    input.value = words.slice(0, maxWords).join(' ');
+  }
+}
+
   </script>
 </body>
 </html>
