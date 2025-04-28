@@ -235,7 +235,12 @@ function generateNewsCanvas() {
 
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 850, 900, 55, 'bold', 'Urdu Najd V3', '#006163');
 
-    newsCtx.drawImage(logoImage, newsCanvas.width - 250, newsCanvas.height - 130, 200, 100); // Corrected logo placement
+
+    const logoX = newsCanvas.width - 115 - 0; // 10px from right
+const logoY = 90; // 10px from top
+newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+    
+
   };
   canvasImage.src = canvas.toDataURL();
 }
