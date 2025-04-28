@@ -261,8 +261,8 @@
 
   // Function to draw wrapped text on canvas with centered alignment and handling numbers in Arial
   function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-    ctx.textAlign = 'center';  // Centering the text horizontally
-    ctx.textBaseline = 'bottom'; // Aligning text to the bottom
+    ctx.textAlign = 'right';  // Right-align text for RTL
+    ctx.textBaseline = 'bottom'; // Align text to the bottom
     ctx.shadowBlur = 0;  // Ensure no blur
     ctx.shadowOffsetX = shadowOffset;
     ctx.shadowOffsetY = shadowOffset;
@@ -274,7 +274,7 @@
     const lineHeight = fontSize * 1.5;
 
     // Set text shadow color but keep it light and subtle
-    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)'; // You can adjust this or remove it if not needed
+    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
     ctx.fillStyle = color; // Ensure fill style is set properly
 
     // Loop through each word and add it to a line
@@ -295,7 +295,7 @@
 
     // Draw the final line with word wrapping
     const wordsInLine = line.trim().split(' ');
-    let currentX = x; // The x position is centered initially
+    let currentX = x; // The x position is right-aligned
     let currentY = yPos;
 
     // Calculate the width of the wrapped text to adjust the final positioning
@@ -304,7 +304,7 @@
       return width + wordWidth + ctx.measureText(' ').width;
     }, 0);
 
-    currentX = x - totalTextWidth / 2; // Adjust the x position to center the text
+    currentX = x + totalTextWidth / 2; // Adjust the x position to start from the right
 
     wordsInLine.forEach(word => {
       // Check if word is a number
@@ -318,48 +318,32 @@
 
       ctx.fillText(word, currentX, currentY); // Draw the word
       const wordWidth = ctx.measureText(word).width;
-      currentX += wordWidth + ctx.measureText(' ').width; // Space between words
+      currentX -= wordWidth + ctx.measureText(' ').width; // Space between words (RTL, decreasing X)
     });
   }
 
-  // Enable/Disable Generate Button based on word count
-  function limitWords(input, maxWords) {
-    let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
-    const counter = document.getElementById('wordCounter');
-    const generateButton = document.getElementById('generateButton');
+  // Event listeners
+  headlineInput.addEventListener('input', () => {
+    generateButton.disabled = headlineInput.value.trim().length === 0;
+  });
 
-    if (words.length > maxWords) {
-      input.style.borderColor = 'red';
-      counter.style.color = 'red';
-      generateButton.disabled = true;
-      generateButton.style.opacity = 0.5; // visually show disabled
-      generateButton.style.cursor = 'not-allowed';
-    } else {
-      input.style.borderColor = '#006163';
-      counter.style.color = '#006163';
-      generateButton.disabled = false;
-      generateButton.style.opacity = 1;
-      generateButton.style.cursor = 'pointer';
-    }
-
-    counter.textContent = `Words: ${words.length} / ${maxWords}`;
-  }
-
-  // Event Listeners
-  document.addEventListener('paste', handlePaste);
   generateButton.addEventListener('click', generateNewsCanvas);
   stretchButton.addEventListener('click', fitByStretch);
   fitLongestSideButton.addEventListener('click', fitOnLongestSide);
   centerButton.addEventListener('click', centerImage);
-  downloadCanvasButton.addEventListener('click', downloadCanvas);
-  downloadNewsButton.addEventListener('click', downloadNews);
 
-  // For word limit functionality
-  headlineInput.addEventListener('input', () => limitWords(headlineInput, 13));
+  // Handle paste events for uploading image
+  document.addEventListener('paste', handlePaste);
+
+  // File upload event (for image)
+  document.getElementById('fileInput').addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => loadImage(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  });
 </script>
-
-
-
-
 </body>
 </html>
