@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Image Crop & News Graphic Generator</title>
+
+<!-- Google Fonts -->
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
@@ -86,29 +88,12 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
-    font-family: 'Urdu Najd V3', serif; /* Use Urdu Najd for headline */
-  }
-
-  #headlineText {
-    position: absolute;
-    top: 700px;
-    width: 100%;
-    text-align: center;
-    font-size: 40px;
-    font-weight: bold;
-    font-family: 'Urdu Najd V3', serif; /* Urdu Najd for headline text */
-    color: black;
-    line-height: 0.8; /* Increased line height */
+    font-family: 'Urdu Najd V3', serif;
   }
 
   .download-buttons {
     margin-top: 20px;
     text-align: center;
-  }
-
-  #downloadCanvasButton, #downloadNewsButton {
-    display: inline-block;
-    margin: 10px;
   }
 
   #wordCounter {
@@ -117,271 +102,247 @@
     font-size: 18px;
     color: #006163;
   }
-
 </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Image Crop & News Graphic Generator</h1>
-    <div id="canvasContainer">
-      <canvas id="canvas" width="1200" height="720"></canvas>
-    </div>
-    <div class="controls">
-      <button id="stretchButton">Fit by Stretch</button>
-      <button id="fitLongestSideButton">Fit on Longest Side</button>
-      <button id="centerButton">Center Image</button>
-    </div>
-    <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
-    <div id="wordCounter">Words: 0 / 13</div>
-    <div class="controls">
-      <button id="generateButton" disabled>Generate News Graphic</button>
-    </div>
-    <div id="newsCanvasContainer">
-      <canvas id="newsCanvas" width="1080" height="1080"></canvas>
-      <div id="headlineText"></div>
-    </div>
-    <div class="download-buttons">
-      <button id="downloadCanvasButton">Download Story Image</button>
-      <button id="downloadNewsButton">Download News Image</button>
-    </div>
+<div class="container">
+  <h1>Image Crop & News Graphic Generator</h1>
+
+  <!-- Input for upload image -->
+  <input type="file" id="fileInput" accept="image/*" style="display:block; margin:0 auto 20px auto;">
+
+  <div id="canvasContainer">
+    <canvas id="canvas" width="1200" height="720"></canvas>
   </div>
 
+  <div class="controls">
+    <button id="stretchButton">Fit by Stretch</button>
+    <button id="fitLongestSideButton">Fit on Longest Side</button>
+    <button id="centerButton">Center Image</button>
+  </div>
+
+  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
+  <div id="wordCounter">Words: 0 / 13</div>
+
+  <div class="controls">
+    <button id="generateButton" disabled>Generate News Graphic</button>
+  </div>
+
+  <div id="newsCanvasContainer">
+    <canvas id="newsCanvas" width="1080" height="1080"></canvas>
+  </div>
+
+  <div class="download-buttons">
+    <button id="downloadCanvasButton">Download Story Image</button>
+    <button id="downloadNewsButton">Download News Image</button>
+  </div>
+</div>
+
 <script>
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const newsCanvas = document.getElementById('newsCanvas');
-  const newsCtx = newsCanvas.getContext('2d');
-  const headlineInput = document.getElementById('headlineInput');
-  const generateButton = document.getElementById('generateButton');
-  const stretchButton = document.getElementById('stretchButton');
-  const fitLongestSideButton = document.getElementById('fitLongestSideButton');
-  const centerButton = document.getElementById('centerButton');
-  const downloadCanvasButton = document.getElementById('downloadCanvasButton');
-  const downloadNewsButton = document.getElementById('downloadNewsButton');
+// Variables
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const newsCanvas = document.getElementById('newsCanvas');
+const newsCtx = newsCanvas.getContext('2d');
+const headlineInput = document.getElementById('headlineInput');
+const generateButton = document.getElementById('generateButton');
+const stretchButton = document.getElementById('stretchButton');
+const fitLongestSideButton = document.getElementById('fitLongestSideButton');
+const centerButton = document.getElementById('centerButton');
+const downloadCanvasButton = document.getElementById('downloadCanvasButton');
+const downloadNewsButton = document.getElementById('downloadNewsButton');
+const fileInput = document.getElementById('fileInput');
 
-  const backgroundImage = new Image();
-  backgroundImage.crossOrigin = 'anonymous';
-  backgroundImage.src = 'bg.jpg'; // Ensure this file is correctly located
+// Background and logo images
+const backgroundImage = new Image();
+backgroundImage.src = 'bg.jpg'; // Your background image
+const logoImage = new Image();
+logoImage.src = 'aaj-logo.png'; // Your logo image
 
-  const logoImage = new Image();
-  logoImage.crossOrigin = 'anonymous';
-  logoImage.src = 'aaj-logo.png'; // Ensure this file is correctly located
+let image = null;
+let offsetX = 0;
+let offsetY = 0;
+let scale = 1;
 
-  let image = null;
-  let offsetX = 0;
-  let offsetY = 0;
-  let scale = 1;
-  let imageCounter = 1; // For automatic numbering
-
-  // Handle paste event for image upload
-  const handlePaste = event => {
-    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-    for (let index in items) {
-      const item = items[index];
-      if (item.kind === 'file' && item.type.includes('image')) {
-        const blob = item.getAsFile();
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          loadImage(event.target.result);
-        };
-        reader.readAsDataURL(blob);
-        break;
-      }
+// Paste image handler
+document.addEventListener('paste', (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (let item of items) {
+    if (item.kind === 'file' && item.type.includes('image')) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        loadImage(event.target.result);
+      };
+      reader.readAsDataURL(blob);
+      break;
     }
+  }
+});
+
+// Load uploaded image
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => loadImage(e.target.result);
+    reader.readAsDataURL(file);
+  }
+});
+
+// Load image
+function loadImage(src) {
+  image = new Image();
+  image.onload = function () {
+    fitByStretch();
   };
-
-  const loadImage = src => {
-    image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.onload = function() {
-      fitByStretch();
-    };
-    image.src = src;
-  };
-
-  const drawImage = () => {
-    if (!image) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
-  };
-
-  const fitByStretch = () => {
-    if (!image) return;
-    offsetX = 0;
-    offsetY = 0;
-    const canvasAspectRatio = 1200 / 720;
-    const imageAspectRatio = image.width / image.height;
-
-    if (imageAspectRatio > canvasAspectRatio) {
-      scale = 720 / image.height;
-      offsetX = (1200 - image.width * scale) / 2;
-    } else {
-      scale = 1200 / image.width;
-      offsetY = (720 - image.height * scale) / 2;
-    }
-    drawImage();
-  };
-
-  const fitOnLongestSide = () => {
-    if (!image) return;
-    offsetX = 0;
-    offsetY = 0;
-    if (image.width > image.height) {
-      scale = canvas.width / image.width;
-    } else {
-      scale = canvas.height / image.height;
-    }
-    drawImage();
-  };
-
-  const centerImage = () => {
-    if (!image) return;
-    offsetX = (canvas.width - image.width * scale) / 2;
-    offsetY = (canvas.height - image.height * scale) / 2;
-    drawImage();
-  };
-
-  const generateNewsCanvas = () => {
-    const headline = headlineInput.value;
-    if (!headline) return;
-    newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-    newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
-
-    const canvasImage = new Image();
-    canvasImage.onload = function() {
-      newsCtx.fillStyle = 'white';
-      newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-      drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd V3', '#006163', 4);
-      const logoX = newsCanvas.width - 115;
-      const logoY = 90;
-      newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-    };
-    canvasImage.src = canvas.toDataURL('image/png');
-  };
-
-  // Function to draw wrapped text on canvas with centered alignment and handling numbers in Arial
- function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-    ctx.textAlign = 'center';  // Center align text
-    ctx.textBaseline = 'top'; // Text draws from top to bottom
-    ctx.direction = 'rtl'; // Right to left for Urdu
-
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = shadowOffset;
-    ctx.shadowOffsetY = shadowOffset;
-    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-    ctx.fillStyle = color;
-
-    const words = text.split(' ');
-    let lines = [];
-    let currentLine = '';
-
-    ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-
-    for (let i = 0; i < words.length; i++) {
-        const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
-        const testWidth = ctx.measureText(testLine).width;
-
-        if (testWidth > maxWidth && currentLine !== '') {
-            lines.push(currentLine);
-            currentLine = words[i];
-        } else {
-            currentLine = testLine;
-        }
-    }
-    if (currentLine) {
-        lines.push(currentLine);
-    }
-
-    const lineHeight = fontSize * 1.5;
-    const totalHeight = lines.length * lineHeight;
-    let startY = y - totalHeight / 2; // Center vertically based on total text height
-
-    for (let line of lines) {
-        // Handle numbers separately: if line has numbers, replace font
-        const containsNumber = /\d/.test(line);
-        if (containsNumber) {
-            ctx.font = `normal ${fontSize}px Arial`;
-        } else {
-            ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-        }
-
-        ctx.fillText(line, x, startY);
-        startY += lineHeight;
-    }
+  image.src = src;
 }
 
+// Draw Image
+function drawImage() {
+  if (!image) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+}
 
-    // Set text shadow color but keep it light and subtle
-    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-    ctx.fillStyle = color; // Ensure fill style is set properly
+// Fit by Stretch
+function fitByStretch() {
+  if (!image) return;
+  offsetX = 0;
+  offsetY = 0;
+  const canvasAspectRatio = canvas.width / canvas.height;
+  const imageAspectRatio = image.width / image.height;
 
-    // Loop through each word and add it to a line
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-
-      // If the line exceeds the max width, draw the previous line
-      if (testWidth > maxWidth && i > 0) {
-        ctx.fillText(line.trim(), x, yPos); // Draw the previous line
-        line = words[i] + ' ';
-        yPos += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-
-    // Draw the final line with word wrapping
-    const wordsInLine = line.trim().split(' ');
-    let currentX = x; // The x position is right-aligned
-    let currentY = yPos;
-
-    // Calculate the width of the wrapped text to adjust the final positioning
-    const totalTextWidth = wordsInLine.reduce((width, word) => {
-      const wordWidth = ctx.measureText(word).width;
-      return width + wordWidth + ctx.measureText(' ').width;
-    }, 0);
-
-    currentX = x + totalTextWidth / 2; // Adjust the x position to start from the right
-
-    wordsInLine.forEach(word => {
-      // Check if word is a number
-      const isNumber = !isNaN(word);
-
-      if (isNumber) {
-        ctx.font = `normal ${fontSize}px Arial`; // Arial font for numbers
-      } else {
-        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`; // Regular font for text
-      }
-
-      ctx.fillText(word, currentX, currentY); // Draw the word
-      const wordWidth = ctx.measureText(word).width;
-      currentX -= wordWidth + ctx.measureText(' ').width; // Space between words (RTL, decreasing X)
-    });
+  if (imageAspectRatio > canvasAspectRatio) {
+    scale = canvas.height / image.height;
+    offsetX = (canvas.width - image.width * scale) / 2;
+  } else {
+    scale = canvas.width / image.width;
+    offsetY = (canvas.height - image.height * scale) / 2;
   }
+  drawImage();
+}
 
-  // Event listeners
-  headlineInput.addEventListener('input', () => {
-    generateButton.disabled = headlineInput.value.trim().length === 0;
-  });
+// Fit on longest side
+function fitOnLongestSide() {
+  if (!image) return;
+  offsetX = 0;
+  offsetY = 0;
+  if (image.width > image.height) {
+    scale = canvas.width / image.width;
+  } else {
+    scale = canvas.height / image.height;
+  }
+  drawImage();
+}
 
-  generateButton.addEventListener('click', generateNewsCanvas);
-  stretchButton.addEventListener('click', fitByStretch);
-  fitLongestSideButton.addEventListener('click', fitOnLongestSide);
-  centerButton.addEventListener('click', centerImage);
+// Center image
+function centerImage() {
+  if (!image) return;
+  offsetX = (canvas.width - image.width * scale) / 2;
+  offsetY = (canvas.height - image.height * scale) / 2;
+  drawImage();
+}
 
-  // Handle paste events for uploading image
-  document.addEventListener('paste', handlePaste);
+// Generate News Canvas
+function generateNewsCanvas() {
+  if (!headlineInput.value) return;
 
-  // File upload event (for image)
-  document.getElementById('fileInput').addEventListener('change', event => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => loadImage(e.target.result);
-      reader.readAsDataURL(file);
+  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+
+  const canvasImage = new Image();
+  canvasImage.onload = function () {
+    newsCtx.fillStyle = 'white';
+    newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+
+    drawWrappedText(newsCtx, headlineInput.value, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'normal', 'Urdu Najd V3', '#006163', 4);
+
+    const logoX = newsCanvas.width - 115;
+    const logoY = 90;
+    newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+  };
+  canvasImage.src = canvas.toDataURL('image/png');
+}
+
+// Wrapped Text Drawing
+function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.direction = 'rtl';
+
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = shadowOffset;
+  ctx.shadowOffsetY = shadowOffset;
+  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+  ctx.fillStyle = color;
+
+  const words = text.split(' ');
+  let lines = [];
+  let currentLine = '';
+
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+  for (let word of words) {
+    const testLine = currentLine ? currentLine + ' ' + word : word;
+    const testWidth = ctx.measureText(testLine).width;
+    if (testWidth > maxWidth && currentLine !== '') {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
     }
-  });
+  }
+  if (currentLine) lines.push(currentLine);
+
+  const lineHeight = fontSize * 1.5;
+  const totalHeight = lines.length * lineHeight;
+  let startY = y - totalHeight / 2;
+
+  for (let line of lines) {
+    const containsNumber = /\d/.test(line);
+    ctx.font = containsNumber ? `normal ${fontSize}px Arial` : `${fontWeight} ${fontSize}px ${fontFamily}`;
+    ctx.fillText(line, x, startY);
+    startY += lineHeight;
+  }
+}
+
+// Limit words function
+function limitWords(input, maxWords) {
+  let words = input.value.trim().split(/\s+/);
+  if (words.length > maxWords) {
+    words = words.slice(0, maxWords);
+    input.value = words.join(' ');
+  }
+  document.getElementById('wordCounter').textContent = `Words: ${words.length} / ${maxWords}`;
+}
+
+// Button listeners
+stretchButton.addEventListener('click', fitByStretch);
+fitLongestSideButton.addEventListener('click', fitOnLongestSide);
+centerButton.addEventListener('click', centerImage);
+generateButton.addEventListener('click', generateNewsCanvas);
+
+headlineInput.addEventListener('input', () => {
+  generateButton.disabled = headlineInput.value.trim().length === 0;
+});
+
+downloadCanvasButton.addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'story-image.png';
+  link.href = canvas.toDataURL();
+  link.click();
+});
+
+downloadNewsButton.addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'news-image.png';
+  link.href = newsCanvas.toDataURL();
+  link.click();
+});
 </script>
+
 </body>
 </html>
