@@ -260,18 +260,56 @@
   };
 
   // Function to draw wrapped text on canvas with centered alignment and handling numbers in Arial
-  function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-    ctx.textAlign = 'right';  // Right-align text for RTL
-    ctx.textBaseline = 'bottom'; // Align text to the bottom
-    ctx.shadowBlur = 0;  // Ensure no blur
-    ctx.shadowOffsetX = shadowOffset;
-    ctx.shadowOffsetY = shadowOffset;
+ function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
+    ctx.textAlign = 'center';  // Center align text
+    ctx.textBaseline = 'top'; // Text draws from top to bottom
     ctx.direction = 'rtl'; // Right to left for Urdu
 
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = shadowOffset;
+    ctx.shadowOffsetY = shadowOffset;
+    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+    ctx.fillStyle = color;
+
     const words = text.split(' ');
-    let line = '';
-    let yPos = y;
+    let lines = [];
+    let currentLine = '';
+
+    ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+    for (let i = 0; i < words.length; i++) {
+        const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+        const testWidth = ctx.measureText(testLine).width;
+
+        if (testWidth > maxWidth && currentLine !== '') {
+            lines.push(currentLine);
+            currentLine = words[i];
+        } else {
+            currentLine = testLine;
+        }
+    }
+    if (currentLine) {
+        lines.push(currentLine);
+    }
+
     const lineHeight = fontSize * 1.5;
+    const totalHeight = lines.length * lineHeight;
+    let startY = y - totalHeight / 2; // Center vertically based on total text height
+
+    for (let line of lines) {
+        // Handle numbers separately: if line has numbers, replace font
+        const containsNumber = /\d/.test(line);
+        if (containsNumber) {
+            ctx.font = `normal ${fontSize}px Arial`;
+        } else {
+            ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        }
+
+        ctx.fillText(line, x, startY);
+        startY += lineHeight;
+    }
+}
+
 
     // Set text shadow color but keep it light and subtle
     ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
