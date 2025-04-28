@@ -235,7 +235,7 @@ function generateNewsCanvas() {
 
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 850, 900, 55, 'bold', 'Urdu Najd V3', '#006163');
 
-    newsCtx.drawImage(logoImage, newsCanvas.width - 140, 60, 115, 115);
+    newsCtx.drawImage(logoImage, newsCanvas.width - 250, newsCanvas.height - 130, 200, 100); // Corrected logo placement
   };
   canvasImage.src = canvas.toDataURL();
 }
@@ -269,12 +269,12 @@ function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFa
 
   lines.forEach((lineText, i) => {
     let currentX = x;
-    const parts = lineText.split(/(\d+)/);
+    const parts = lineText.split(/(\d+)/); // Split text from digits
 
     parts.forEach(part => {
       if (part.trim() === '') return;
       if (!isNaN(part)) {
-        ctx.font = `${fontWeight} ${fontSize}px Arial`;
+        ctx.font = `${fontWeight} ${fontSize}px Arial`; // Change font for numbers
       } else {
         ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
       }
