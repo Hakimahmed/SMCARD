@@ -170,175 +170,193 @@
     let image = null;
     let offsetX = 0;
     let offsetY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
     let scale = 1;
 
     const handlePaste = event => {
-      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-      for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image')) {
-          const blob = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            console.log('Image pasted:', event.target.result);
-            loadImage(event.target.result);
-          };
-          reader.readAsDataURL(blob);
-          break;
+        const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (let index in items) {
+            const item = items[index];
+            if (item.kind === 'file' && item.type.includes('image')) {
+                const blob = item.getAsFile();
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    loadImage(event.target.result);
+                };
+                reader.readAsDataURL(blob);
+                break;
+            }
         }
-      }
     };
 
     const loadImage = src => {
-      console.log('Loading image...');
-      image = new Image();
-      image.crossOrigin = 'anonymous';
-      image.onload = function() {
-        console.log('Image loaded');
-        fitByStretch();
-      };
-      image.src = src;
+        image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = function() {
+            fitByStretch();
+        };
+        image.src = src;
     };
 
     const drawImage = () => {
-      if (!image) {
-        console.error('No image to draw');
-        return;
-      }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
+        if (!image) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
     };
 
     const fitByStretch = () => {
-      if (!image) {
-        console.error('No image to stretch');
-        return;
-      }
-      offsetX = 0;
-      offsetY = 0;
-      const canvasAspectRatio = 1200 / 720;
-      const imageAspectRatio = image.width / image.height;
+        if (!image) return;
+        offsetX = 0;
+        offsetY = 0;
+        const canvasAspectRatio = 1200 / 720;
+        const imageAspectRatio = image.width / image.height;
 
-      if (imageAspectRatio > canvasAspectRatio) {
-        scale = 720 / image.height;
-        offsetX = (1200 - image.width * scale) / 2;
-      } else {
-        scale = 1200 / image.width;
-        offsetY = (720 - image.height * scale) / 2;
-      }
-      drawImage();
+        if (imageAspectRatio > canvasAspectRatio) {
+            scale = 720 / image.height;
+            offsetX = (1200 - image.width * scale) / 2;
+        } else {
+            scale = 1200 / image.width;
+            offsetY = (720 - image.height * scale) / 2;
+        }
+        drawImage();
     };
 
     const fitOnLongestSide = () => {
-      if (!image) {
-        console.error('No image to fit');
-        return;
-      }
-      offsetX = 0;
-      offsetY = 0;
-      if (image.width > image.height) {
-        scale = canvas.width / image.width;
-      } else {
-        scale = canvas.height / image.height;
-      }
-      drawImage();
+        if (!image) return;
+        offsetX = 0;
+        offsetY = 0;
+        if (image.width > image.height) {
+            scale = canvas.width / image.width;
+        } else {
+            scale = canvas.height / image.height;
+        }
+        drawImage();
     };
 
     const centerImage = () => {
-      if (!image) {
-        console.error('No image to center');
-        return;
-      }
-      offsetX = (canvas.width - image.width * scale) / 2;
-      offsetY = (canvas.height - image.height * scale) / 2;
-      drawImage();
+        if (!image) return;
+        offsetX = (canvas.width - image.width * scale) / 2;
+        offsetY = (canvas.height - image.height * scale) / 2;
+        drawImage();
     };
 
     const generateNewsCanvas = () => {
-      const headline = headlineInput.value.trim();
-      if (!headline) {
-        alert('Please enter a headline!');
-        return;
-      }
+        const headline = headlineInput.value;
+        if (!headline) {
+            console.error('No headline entered');
+            return;
+        }
 
-      console.log('Generating news graphic with headline:', headline);
+        newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+        newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
-      newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-      newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
-
-      const canvasImage = new Image();
-      canvasImage.onload = function() {
-        newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-        drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 230, 900, 60, 'bold', 'Urdu Najd V3', '#006163', 4);
-        const logoX = newsCanvas.width - 115;
-        const logoY = 90;
-        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-      };
-      canvasImage.src = canvas.toDataURL('image/png');
+        const canvasImage = new Image();
+        canvasImage.onload = function() {
+            newsCtx.fillStyle = 'white';
+            newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+            drawWrappedText(newsCtx, headline, newsCanvas.width / 2, newsCanvas.height - 250, 900, 60, 'bold', 'Urdu Najd V3', '#006163', 4);
+            const logoX = newsCanvas.width - 115;
+            const logoY = 90;
+            newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+        };
+        canvasImage.src = canvas.toDataURL('image/png');
     };
 
     function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
-      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = shadowOffset;
-      ctx.shadowOffsetY = shadowOffset;
-      ctx.direction = 'rtl'; // Right to left for Urdu
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = shadowOffset;
+        ctx.shadowOffsetY = shadowOffset;
+        ctx.direction = 'rtl'; // Right to left for Urdu
 
-      const words = text.split(' ');
-      let line = '';
-      let yPos = y;
-      const lineHeight = fontSize * 1.5;
+        const words = text.split(' ');
+        let line = '';
+        let yPos = y;
+        const lineHeight = fontSize * 1.5;
 
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
 
-        if (testWidth > maxWidth && i > 0) {
-          ctx.fillText(line.trim(), x, yPos);
-          line = words[i] + ' ';
-          yPos += lineHeight;
-        } else {
-          line = testLine;
+            if (testWidth > maxWidth && i > 0) {
+                ctx.fillText(line.trim(), x, yPos);
+                line = words[i] + ' ';
+                yPos += lineHeight;
+            } else {
+                line = testLine;
+            }
         }
-      }
-      ctx.fillText(line.trim(), x, yPos);
+
+        // Draw the final line with word wrapping
+        const wordsInLine = line.trim().split(' ');
+        let currentX = x;
+        let currentY = yPos;
+
+        wordsInLine.forEach(word => {
+            // Check if word is a number
+            const isNumber = !isNaN(word);
+            
+            if (isNumber) {
+                ctx.font = `normal ${fontSize}px Arial`; // Arial font for numbers
+            } else {
+                ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`; // Regular font for text
+            }
+
+            ctx.fillText(word, currentX, currentY);
+            const wordWidth = ctx.measureText(word).width;
+            currentX += wordWidth + ctx.measureText(' ').width; // Space between words
+        });
     }
 
     const downloadCanvas = () => {
-      const link = document.createElement('a');
-      link.download = `card_${Date.now()}.webp`;  // Use timestamp for unique names
-      link.href = canvas.toDataURL('image/webp', 0.5);
-      link.click();
+        const link = document.createElement('a');
+        link.download = `card_${imageCounter}.webp`;  // Automatic numbering
+        link.href = canvas.toDataURL('image/webp', 0.5);
+        link.click();
+        imageCounter++; // Increment image number after download
     };
 
     const downloadNews = () => {
-      const link = document.createElement('a');
-      link.download = `news_card_${Date.now()}.webp`;
-      link.href = newsCanvas.toDataURL('image/webp', 0.95);
-      link.click();
+        const link = document.createElement('a');
+        link.download = `news_card_${imageCounter}.webp`;  // Automatic numbering
+        link.href = newsCanvas.toDataURL('image/webp', 0.95);
+        link.click();
+        imageCounter++; // Increment image number after download
     };
 
     document.addEventListener('paste', handlePaste);
+    generateButton.addEventListener('click', generateNewsCanvas);
     stretchButton.addEventListener('click', fitByStretch);
     fitLongestSideButton.addEventListener('click', fitOnLongestSide);
     centerButton.addEventListener('click', centerImage);
-    generateButton.addEventListener('click', generateNewsCanvas);
     downloadCanvasButton.addEventListener('click', downloadCanvas);
     downloadNewsButton.addEventListener('click', downloadNews);
 
-    headlineInput.addEventListener('input', function() {
-      const wordCount = headlineInput.value.split(' ').length;
-      document.getElementById('wordCounter').textContent = `Words: ${wordCount} / 13`;
-      generateButton.disabled = wordCount > 13; // Disable button if words exceed limit
-    });
-  </script>
+    // Word limit and style changes
+    function limitWords(input, maxWords) {
+        let words = input.value.trim().split(/\s+/).filter(word => word.length > 0);
+        const counter = document.getElementById('wordCounter');
+        const generateButton = document.getElementById('generateButton');
+
+        if (words.length > maxWords) {
+            input.style.borderColor = 'red';
+            counter.style.color = 'red';
+            generateButton.disabled = true;
+            generateButton.style.opacity = 0.5; // visually show disabled
+            generateButton.style.cursor = 'not-allowed';
+        } else {
+            input.style.borderColor = '#006163';
+            counter.style.color = '#006163';
+            generateButton.disabled = false;
+            generateButton.style.opacity = 1;
+            generateButton.style.cursor = 'pointer';
+        }
+
+        counter.textContent = `Words: ${words.length} / ${maxWords}`;
+    }
+</script>
+
 </body>
 </html>
