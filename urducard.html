@@ -149,16 +149,17 @@ const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg';
+backgroundImage.src = 'bg.jpg'; // Your background image path
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png';
+logoImage.src = 'aaj-logo.png'; // Your logo image path
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
+// Paste Image
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -230,6 +231,7 @@ function generateNewsCanvas() {
   const canvasImage = new Image();
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 850, 900, 55, 'bold', 'Urdu Najd V3', '#006163');
 
     const logoX = newsCanvas.width - 115;
@@ -240,20 +242,20 @@ function generateNewsCanvas() {
 }
 
 function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color) {
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'right';
   ctx.fillStyle = color;
   ctx.direction = 'rtl';
 
-  const words = text.split(' ');
-  let line = '';
+  const words = text.trim().split(/\s+/);
   const lines = [];
-  const lineHeight = fontSize * 1.5;
+  let line = '';
+  const lineHeight = fontSize * 1.6;
 
-  // Build lines
   for (let i = 0; i < words.length; i++) {
     const testLine = line + words[i] + ' ';
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
     const testWidth = ctx.measureText(testLine).width;
+
     if (testWidth > maxWidth && line !== '') {
       lines.push(line.trim());
       line = words[i] + ' ';
@@ -261,30 +263,27 @@ function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFa
       line = testLine;
     }
   }
+
   if (line) lines.push(line.trim());
 
-  // Render each line
-  lines.forEach((lineText, lineIndex) => {
-    const parts = lineText.split(/(\d+)/).filter(p => p !== '');
+  lines.forEach((lineText, index) => {
+    const parts = lineText.split(/(\d+)/).filter(p => p);
     let totalWidth = 0;
 
-    // First, calculate total width of the line
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
       ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : fontFamily}`;
       totalWidth += ctx.measureText(part).width;
     });
 
-    // Start from calculated X to center the whole line
-    let startX = x + totalWidth / 2;
+    let currentX = x + totalWidth / 2;
 
-    // Draw parts from right to left
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
       ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : fontFamily}`;
       const partWidth = ctx.measureText(part).width;
-      startX -= partWidth;
-      ctx.fillText(part, startX, y + lineIndex * lineHeight);
+      currentX -= partWidth;
+      ctx.fillText(part, currentX, y + index * lineHeight);
     });
   });
 }
@@ -322,6 +321,7 @@ downloadNewsButton.addEventListener('click', () => {
   link.click();
 });
 </script>
+
 
 </body>
 </html>
