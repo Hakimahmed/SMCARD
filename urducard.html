@@ -149,17 +149,16 @@ const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg'; // Your background image path
+backgroundImage.src = 'bg.jpg';
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png'; // Your logo image path
+logoImage.src = 'aaj-logo.png';
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
-// Paste Image
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -174,7 +173,7 @@ document.addEventListener('paste', (event) => {
 
 function loadImage(src) {
   image = new Image();
-  image.onload = function() {
+  image.onload = function () {
     fitByStretch();
   };
   image.src = src;
@@ -225,18 +224,25 @@ function generateNewsCanvas() {
   const headline = headlineInput.value.trim();
   if (!headline) return;
 
-  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
-
   const canvasImage = new Image();
-  canvasImage.onload = function() {
+  canvasImage.onload = function () {
+    newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+    newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
 
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 775, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
 
-    const logoX = newsCanvas.width - 115;
-    const logoY = 90;
-    newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+    if (!logoImage.complete) {
+      logoImage.onload = () => {
+        const logoX = newsCanvas.width - 115;
+        const logoY = 90;
+        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+      };
+    } else {
+      const logoX = newsCanvas.width - 115;
+      const logoY = 90;
+      newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+    }
   };
   canvasImage.src = canvas.toDataURL();
 }
@@ -247,16 +253,14 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   let lines = [];
   let currentLine = "";
 
-  // Set drop shadow properties
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; // Shadow color (semi-transparent black)
-  ctx.shadowBlur = 8; // Blur radius
-  ctx.shadowOffsetX = 2; // Horizontal shadow offset
-  ctx.shadowOffsetY = 2; // Vertical shadow offset
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
 
-  // Build lines based on visual width
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
     ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
@@ -271,23 +275,19 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
   if (currentLine) lines.push(currentLine);
 
-  // Render each line RTL and centered
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const parts = line.split(/(\d+)/).filter(Boolean);
     let totalLineWidth = 0;
 
-    // Measure width of all parts
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
       ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
       totalLineWidth += ctx.measureText(part).width;
     });
 
-    // Set starting X from right side to center the full line
     let x = centerX + totalLineWidth / 2;
 
-    // Draw parts right-to-left
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
@@ -298,34 +298,26 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
     }
   }
 
-  // Reset shadow properties to avoid affecting other parts of the canvas
   ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
   ctx.shadowBlur = 0;
-   ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-      ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
-      ctx.direction = 'rtl'; // Set text direction to RTL
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.direction = 'rtl';
 }
-
-
-
-
 
 let isDragging = false;
 let startX, startY;
 
-// Drag Start
 canvas.addEventListener('mousedown', (e) => {
   isDragging = true;
   startX = e.offsetX;
   startY = e.offsetY;
 });
 
-// Drag End
 canvas.addEventListener('mouseup', () => {
   isDragging = false;
 });
 
-// Drag Move
 canvas.addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const dx = e.offsetX - startX;
@@ -337,7 +329,6 @@ canvas.addEventListener('mousemove', (e) => {
   drawImage();
 });
 
-// Mouse Wheel Zoom
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
 
@@ -348,34 +339,16 @@ canvas.addEventListener('wheel', (e) => {
   const direction = e.deltaY > 0 ? -1 : 1;
   const factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
 
-  // Clamp scale between 0.1 and 5
   const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  factor = newScale / scale;
+  const adjustedFactor = newScale / scale;
 
-  offsetX -= (mouseX - offsetX) * (factor - 1);
-  offsetY -= (mouseY - offsetY) * (factor - 1);
+  offsetX -= (mouseX - offsetX) * (adjustedFactor - 1);
+  offsetY -= (mouseY - offsetY) * (adjustedFactor - 1);
   scale = newScale;
 
   drawImage();
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
@@ -409,6 +382,7 @@ downloadNewsButton.addEventListener('click', () => {
   link.click();
 });
 </script>
+
 
 
 </body>
