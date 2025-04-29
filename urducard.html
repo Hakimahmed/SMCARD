@@ -251,17 +251,17 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   let lines = [];
   let currentLine = "";
 
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = color;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
   ctx.shadowBlur = 8;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
 
-  ctx.fillStyle = color;
-  ctx.textBaseline = "top";
-
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
+    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
     const testWidth = ctx.measureText(testLine).width;
 
     if (testWidth > maxWidth && currentLine !== "") {
@@ -276,32 +276,34 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const parts = line.split(/(\d+)/).filter(Boolean);
-    let totalLineWidth = 0;
+
+    let x = centerX;
+    let y = startY + i * lineHeight;
+
+    let totalWidth = 0;
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : `'${urduFont}'`}`;
+      totalWidth += ctx.measureText(part).width;
+    });
+
+    let drawX = centerX + totalWidth / 2; // Start from right edge
 
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
-      totalLineWidth += ctx.measureText(part).width;
-    });
-
-    let x = centerX + totalLineWidth / 2;
-
-    for (let j = 0; j < parts.length; j++) {
-      const part = parts[j];
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : `'${urduFont}'`}`;
       const partWidth = ctx.measureText(part).width;
-      x -= partWidth;
-      ctx.fillText(part, x, startY + i * lineHeight);
-    }
+      drawX -= partWidth;
+      ctx.fillText(part, drawX, y);
+    });
   }
 
   ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
-  ctx.direction = 'rtl';
 }
+
 
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
