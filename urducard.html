@@ -216,65 +216,70 @@ function drawImage() {
   ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
 }
 
-function drawHeadline(ctx, text, x, y, maxWidth, lineHeight, fontSize) {
-  ctx.textAlign = 'right';
-  ctx.direction = 'rtl';
-  ctx.font = `${fontSize}px 'Noto Nastaliq Urdu'`;
-  ctx.fillStyle = '#006163';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 4;
+function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
+  const lineHeight = fontSize * 1.6;
+  const words = text.trim().split(/\s+/);
+  let lines = [];
+  let currentLine = "";
+
+  ctx.fillStyle = color;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "right"; // Align text to the right for RTL
+  ctx.direction = "rtl"; // Set text direction
+
+  // Set drop shadow
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 8;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
 
-  let words = text.split(/\s+/);
-  let line = '';
-  for (let n = 0; n < words.length; n++) {
-    let testLine = words[n] + ' ' + line;
-    let metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      ctx.fillText(line, x, y);
-      line = words[n] + ' ';
-      y += lineHeight;
+  // Build lines based on visual width
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine + (currentLine ? " " : "") + words[i];
+    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
+    const testWidth = ctx.measureText(testLine).width;
+
+    if (testWidth > maxWidth && currentLine !== "") {
+      lines.push(currentLine);
+      currentLine = words[i];
     } else {
-      line = testLine;
+      currentLine = testLine;
     }
   }
-  ctx.fillText(line, x, y);
+  if (currentLine) lines.push(currentLine);
 
+  // Draw lines RTL
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const parts = line.split(/(\d+)/).filter(Boolean);
+
+    let totalLineWidth = 0;
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
+      totalLineWidth += ctx.measureText(part).width;
+    });
+
+    let x = centerX + totalLineWidth / 2;
+
+    // Draw each part from right to left
+    for (let j = 0; j < parts.length; j++) {
+      const part = parts[j];
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
+      const partWidth = ctx.measureText(part).width;
+      x -= partWidth;
+      ctx.fillText(part, x, startY + i * lineHeight);
+    }
+  }
+
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
 }
 
-function generateNewsCanvas() {
-  const headline = headlineInput.value.trim();
-  if (!headline) return;
-
-  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
-  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
-
-  const canvasImage = new Image();
-  canvasImage.onload = () => {
-    newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-    drawHeadline(newsCtx, headline, 1030, 750, 900, 70, 52);
-    if (logoImage.complete) newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-    else logoImage.onload = () => newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-  };
-  canvasImage.src = canvas.toDataURL();
-}
-
-function limitWords(input, maxWords) {
-  const words = input.value.trim().split(/\s+/);
-  const counter = document.getElementById('wordCounter');
-  counter.textContent = `Words: ${words.length} / ${maxWords}`;
-  if (words.length > maxWords) {
-    input.style.border = '2px solid red';
-    generateButton.disabled = true;
-  } else {
-    input.style.border = '1px solid #ccc';
-    generateButton.disabled = words.length === 0;
-  }
-}
 
 generateButton.addEventListener('click', generateNewsCanvas);
 stretchButton.addEventListener('click', fitByStretch);
