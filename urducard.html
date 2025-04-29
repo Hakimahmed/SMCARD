@@ -7,7 +7,7 @@
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
- @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
 
   * {
     box-sizing: border-box;
@@ -87,7 +87,7 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
-    font-family: 'Noto Nastaliq Urdu', serif;
+    font-family: 'Urdu Najd V3', serif;
   }
 
   #wordCounter {
@@ -104,6 +104,7 @@
 </style>
 </head>
 <body>
+
 <div class="container">
   <h1>Image Crop & News Graphic Generator</h1>
 
@@ -148,22 +149,17 @@ const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg';
+backgroundImage.src = 'bg.jpg'; // Your background image path
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png';
+logoImage.src = 'aaj-logo.png'; // Your logo image path
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
-function loadImage(src) {
-  image = new Image();
-  image.onload = () => fitByStretch();
-  image.src = src;
-}
-
+// Paste Image
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -176,12 +172,21 @@ document.addEventListener('paste', (event) => {
   }
 });
 
+function loadImage(src) {
+  image = new Image();
+  image.onload = function() {
+    fitByStretch();
+  };
+  image.src = src;
+}
+
 function fitByStretch() {
   if (!image) return;
   offsetX = 0;
   offsetY = 0;
   const canvasAspectRatio = 1200 / 720;
   const imageAspectRatio = image.width / image.height;
+
   if (imageAspectRatio > canvasAspectRatio) {
     scale = 720 / image.height;
     offsetX = (1200 - image.width * scale) / 2;
@@ -216,6 +221,26 @@ function drawImage() {
   ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
 }
 
+function generateNewsCanvas() {
+  const headline = headlineInput.value.trim();
+  if (!headline) return;
+
+  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+
+  const canvasImage = new Image();
+  canvasImage.onload = function() {
+    newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
+
+    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 800, 900, 55, 'normal', 'Urdu Najd V3', '#006163');
+
+    const logoX = newsCanvas.width - 115;
+    const logoY = 90;
+    newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+  };
+  canvasImage.src = canvas.toDataURL();
+}
+
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
   const lineHeight = fontSize * 1.6;
   const words = text.trim().split(/\s+/);
@@ -224,19 +249,11 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-  ctx.textAlign = "right"; // Align text to the right for RTL
-  ctx.direction = "rtl"; // Set text direction
-
-  // Set drop shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
 
   // Build lines based on visual width
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
+    ctx.font = ${fontWeight} ${fontSize}px ${urduFont};
     const testWidth = ctx.measureText(testLine).width;
 
     if (testWidth > maxWidth && currentLine !== "") {
@@ -248,38 +265,117 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
   if (currentLine) lines.push(currentLine);
 
-  // Draw lines RTL
+  // Render each line RTL and centered
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const parts = line.split(/(\d+)/).filter(Boolean);
-
     let totalLineWidth = 0;
+
+    // Measure width of all parts
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
+      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
       totalLineWidth += ctx.measureText(part).width;
     });
 
+    // Set starting X from right side to center the full line
     let x = centerX + totalLineWidth / 2;
 
-    // Draw each part from right to left
+    // Draw parts right-to-left
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
+      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
     }
   }
-
-  // Reset shadow
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
 }
 
+
+
+
+
+let isDragging = false;
+let startX, startY;
+
+// Drag Start
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.offsetX;
+  startY = e.offsetY;
+});
+
+// Drag End
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+// Drag Move
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.offsetX - startX;
+  const dy = e.offsetY - startY;
+  startX = e.offsetX;
+  startY = e.offsetY;
+  offsetX += dx;
+  offsetY += dy;
+  drawImage();
+});
+
+// Mouse Wheel Zoom
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+
+  const zoomFactor = 1.1;
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  const direction = e.deltaY > 0 ? -1 : 1;
+  const factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
+
+  // Clamp scale between 0.1 and 5
+  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
+  factor = newScale / scale;
+
+  offsetX -= (mouseX - offsetX) * (factor - 1);
+  offsetY -= (mouseY - offsetY) * (factor - 1);
+  scale = newScale;
+
+  drawImage();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+function limitWords(input, maxWords) {
+  const words = input.value.trim().split(/\s+/);
+  const wordCounter = document.getElementById('wordCounter');
+  wordCounter.textContent = Words: ${words.length} / ${maxWords};
+
+  if (words.length > maxWords) {
+    input.style.border = '2px solid red';
+    generateButton.disabled = true;
+  } else {
+    input.style.border = '1px solid #ccc';
+    generateButton.disabled = words.length === 0;
+  }
+}
 
 generateButton.addEventListener('click', generateNewsCanvas);
 stretchButton.addEventListener('click', fitByStretch);
@@ -300,5 +396,7 @@ downloadNewsButton.addEventListener('click', () => {
   link.click();
 });
 </script>
+
+
 </body>
 </html>
