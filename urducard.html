@@ -7,7 +7,7 @@
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
+ @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
 
   * {
     box-sizing: border-box;
@@ -87,7 +87,7 @@
     border-radius: 6px;
     margin: 20px auto;
     display: block;
-    font-family: 'Urdu Najd V3', serif;
+    font-family: 'Noto Nastaliq Urdu', serif;
   }
 
   #wordCounter {
@@ -104,7 +104,6 @@
 </style>
 </head>
 <body>
-
 <div class="container">
   <h1>Image Crop & News Graphic Generator</h1>
 
@@ -149,17 +148,22 @@ const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg'; // Your background image path
+backgroundImage.src = 'bg.jpg';
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png'; // Your logo image path
+logoImage.src = 'aaj-logo.png';
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
-// Paste Image
+function loadImage(src) {
+  image = new Image();
+  image.onload = () => fitByStretch();
+  image.src = src;
+}
+
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -172,21 +176,12 @@ document.addEventListener('paste', (event) => {
   }
 });
 
-function loadImage(src) {
-  image = new Image();
-  image.onload = function() {
-    fitByStretch();
-  };
-  image.src = src;
-}
-
 function fitByStretch() {
   if (!image) return;
   offsetX = 0;
   offsetY = 0;
   const canvasAspectRatio = 1200 / 720;
   const imageAspectRatio = image.width / image.height;
-
   if (imageAspectRatio > canvasAspectRatio) {
     scale = 720 / image.height;
     offsetX = (1200 - image.width * scale) / 2;
@@ -221,6 +216,36 @@ function drawImage() {
   ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
 }
 
+function drawHeadline(ctx, text, x, y, maxWidth, lineHeight, fontSize) {
+  ctx.textAlign = 'right';
+  ctx.direction = 'rtl';
+  ctx.font = `${fontSize}px 'Noto Nastaliq Urdu'`;
+  ctx.fillStyle = '#006163';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+
+  let words = text.split(/\s+/);
+  let line = '';
+  for (let n = 0; n < words.length; n++) {
+    let testLine = words[n] + ' ' + line;
+    let metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y);
+
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+}
+
 function generateNewsCanvas() {
   const headline = headlineInput.value.trim();
   if (!headline) return;
@@ -229,87 +254,19 @@ function generateNewsCanvas() {
   newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
 
   const canvasImage = new Image();
-  canvasImage.onload = function() {
+  canvasImage.onload = () => {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-
-    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 775, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
-
-    if (logoImage.complete) {
-      newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-    } else {
-      logoImage.onload = () => {
-        newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-      };
-    }
+    drawHeadline(newsCtx, headline, 1030, 750, 900, 70, 52);
+    if (logoImage.complete) newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
+    else logoImage.onload = () => newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
   };
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-  const lineHeight = fontSize * 1.6;
-  const words = text.trim().split(/\s+/);
-  let lines = [];
-  let currentLine = "";
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = color;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-
-  for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
-    const testWidth = ctx.measureText(testLine).width;
-
-    if (testWidth > maxWidth && currentLine !== "") {
-      lines.push(currentLine);
-      currentLine = words[i];
-    } else {
-      currentLine = testLine;
-    }
-  }
-  if (currentLine) lines.push(currentLine);
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const parts = line.split(/(\d+)/).filter(Boolean);
-
-    let x = centerX;
-    let y = startY + i * lineHeight;
-
-    let totalWidth = 0;
-    parts.forEach(part => {
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : `'${urduFont}'`}`;
-      totalWidth += ctx.measureText(part).width;
-    });
-
-    let drawX = centerX + totalWidth / 2; // Start from right edge
-
-    parts.forEach(part => {
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : `'${urduFont}'`}`;
-      const partWidth = ctx.measureText(part).width;
-      drawX -= partWidth;
-      ctx.fillText(part, drawX, y);
-    });
-  }
-
-  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-}
-
-
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
-  const wordCounter = document.getElementById('wordCounter');
-  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
-
+  const counter = document.getElementById('wordCounter');
+  counter.textContent = `Words: ${words.length} / ${maxWords}`;
   if (words.length > maxWords) {
     input.style.border = '2px solid red';
     generateButton.disabled = true;
@@ -337,52 +294,6 @@ downloadNewsButton.addEventListener('click', () => {
   link.href = newsCanvas.toDataURL();
   link.click();
 });
-
-// Drag and Zoom
-let isDragging = false;
-let startX, startY;
-
-canvas.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startX = e.offsetX;
-  startY = e.offsetY;
-});
-
-canvas.addEventListener('mouseup', () => {
-  isDragging = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const dx = e.offsetX - startX;
-  const dy = e.offsetY - startY;
-  startX = e.offsetX;
-  startY = e.offsetY;
-  offsetX += dx;
-  offsetY += dy;
-  drawImage();
-});
-
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-
-  const zoomFactor = 1.1;
-  const mouseX = e.offsetX;
-  const mouseY = e.offsetY;
-
-  const direction = e.deltaY > 0 ? -1 : 1;
-  let factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
-
-  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  factor = newScale / scale;
-
-  offsetX -= (mouseX - offsetX) * (factor - 1);
-  offsetY -= (mouseY - offsetY) * (factor - 1);
-  scale = newScale;
-
-  drawImage();
-});
 </script>
-
 </body>
 </html>
