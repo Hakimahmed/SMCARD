@@ -159,6 +159,7 @@ let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
+// Paste Image
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -173,7 +174,7 @@ document.addEventListener('paste', (event) => {
 
 function loadImage(src) {
   image = new Image();
-  image.onload = function () {
+  image.onload = function() {
     fitByStretch();
   };
   image.src = src;
@@ -224,24 +225,25 @@ function generateNewsCanvas() {
   const headline = headlineInput.value.trim();
   if (!headline) return;
 
-  const canvasImage = new Image();
-  canvasImage.onload = function () {
-    newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+  newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
+
+  // Draw background when it's loaded
+  backgroundImage.onload = () => {
     newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+  };
+  newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
+
+  const canvasImage = new Image();
+  canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
 
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 775, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
 
-    if (!logoImage.complete) {
-      logoImage.onload = () => {
-        const logoX = newsCanvas.width - 115;
-        const logoY = 90;
-        newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-      };
-    } else {
-      const logoX = newsCanvas.width - 115;
-      const logoY = 90;
-      newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
+    logoImage.onload = () => {
+      newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
+    };
+    if (logoImage.complete) {
+      newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
     }
   };
   canvasImage.src = canvas.toDataURL();
@@ -253,13 +255,13 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   let lines = [];
   let currentLine = "";
 
+  ctx.textBaseline = "top";
+  ctx.fillStyle = color;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
   ctx.shadowBlur = 8;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-
-  ctx.fillStyle = color;
-  ctx.textBaseline = "top";
+  ctx.direction = "rtl";
 
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
@@ -298,13 +300,13 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
     }
   }
 
-  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+  ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
-  ctx.direction = 'rtl';
 }
 
+// Drag + Zoom handlers
 let isDragging = false;
 let startX, startY;
 
@@ -331,21 +333,16 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-
   const zoomFactor = 1.1;
   const mouseX = e.offsetX;
   const mouseY = e.offsetY;
-
   const direction = e.deltaY > 0 ? -1 : 1;
   const factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
-
   const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  const adjustedFactor = newScale / scale;
-
-  offsetX -= (mouseX - offsetX) * (adjustedFactor - 1);
-  offsetY -= (mouseY - offsetY) * (adjustedFactor - 1);
+  const actualFactor = newScale / scale;
+  offsetX -= (mouseX - offsetX) * (actualFactor - 1);
+  offsetY -= (mouseY - offsetY) * (actualFactor - 1);
   scale = newScale;
-
   drawImage();
 });
 
@@ -353,7 +350,6 @@ function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
   wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
-
   if (words.length > maxWords) {
     input.style.border = '2px solid red';
     generateButton.disabled = true;
@@ -382,6 +378,7 @@ downloadNewsButton.addEventListener('click', () => {
   link.click();
 });
 </script>
+
 
 
 
