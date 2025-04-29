@@ -294,6 +294,14 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 }
 
 
+ctx.fillStyle = color;
+ctx.textAlign = 'center';
+ctx.textBaseline = 'bottom';
+ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
+ctx.shadowBlur = 0;
+ctx.shadowOffsetX = shadowOffset; // e.g., 5
+ctx.shadowOffsetY = shadowOffset; // e.g., 5
+ctx.direction = 'rtl';
 
 
 
