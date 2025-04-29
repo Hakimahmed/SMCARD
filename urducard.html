@@ -101,7 +101,6 @@
     margin-top: 20px;
     text-align: center;
   }
-
 </style>
 </head>
 <body>
@@ -150,17 +149,16 @@ const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
 
 const backgroundImage = new Image();
-backgroundImage.src = 'bg.jpg'; // Your background image path
+backgroundImage.src = 'bg.jpg';
 
 const logoImage = new Image();
-logoImage.src = 'aaj-logo.png'; // Your logo image path
+logoImage.src = 'aaj-logo.png';
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 
-// Paste Image
 document.addEventListener('paste', (event) => {
   const items = event.clipboardData.items;
   for (let item of items) {
@@ -232,15 +230,11 @@ function generateNewsCanvas() {
   const canvasImage = new Image();
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 850, 900, 55, 'bold', 'Urdu Najd V3', '#006163');
 
-
-    const logoX = newsCanvas.width - 115 - 0; // 10px from right
-const logoY = 90; // 10px from top
-newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
-    
-
+    const logoX = newsCanvas.width - 115;
+    const logoY = 90;
+    newsCtx.drawImage(logoImage, logoX, logoY, 115, 115);
   };
   canvasImage.src = canvas.toDataURL();
 }
@@ -274,17 +268,13 @@ function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFa
 
   lines.forEach((lineText, i) => {
     let currentX = x;
-    const parts = lineText.split(/(\d+)/); // Split text from digits
+    const parts = lineText.split(/(\s+|\d+)/).filter(p => p.trim() !== '');
 
-    parts.forEach(part => {
-      if (part.trim() === '') return;
-      if (!isNaN(part)) {
-        ctx.font = `${fontWeight} ${fontSize}px Arial`; // Change font for numbers
-      } else {
-        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      }
-      ctx.fillText(part, currentX, y + i * lineHeight);
-      currentX -= ctx.measureText(part).width;
+    parts.forEach(word => {
+      const isNumber = /^\d+$/.test(word);
+      ctx.font = `70px ${isNumber ? 'Arial' : '"Urdu Najd V3"'}`;
+      ctx.fillText(word, currentX, y + i * lineHeight);
+      currentX -= ctx.measureText(word).width;
     });
   });
 }
@@ -321,7 +311,6 @@ downloadNewsButton.addEventListener('click', () => {
   link.href = newsCanvas.toDataURL();
   link.click();
 });
-
 </script>
 
 </body>
