@@ -293,6 +293,76 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
 }
 
+
+
+
+
+let isDragging = false;
+let startX, startY;
+
+// Drag Start
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.offsetX;
+  startY = e.offsetY;
+});
+
+// Drag End
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+// Drag Move
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.offsetX - startX;
+  const dy = e.offsetY - startY;
+  startX = e.offsetX;
+  startY = e.offsetY;
+  offsetX += dx;
+  offsetY += dy;
+  drawImage();
+});
+
+// Mouse Wheel Zoom
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+
+  const zoomFactor = 1.1;
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  const direction = e.deltaY > 0 ? -1 : 1;
+  const factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
+
+  // Clamp scale between 0.1 and 5
+  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
+  factor = newScale / scale;
+
+  offsetX -= (mouseX - offsetX) * (factor - 1);
+  offsetY -= (mouseY - offsetY) * (factor - 1);
+  scale = newScale;
+
+  drawImage();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
