@@ -249,32 +249,42 @@ function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFa
   const lines = [];
   const lineHeight = fontSize * 1.5;
 
-  words.forEach(word => {
-    const testLine = line + word + ' ';
+  // Build lines
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
     const testWidth = ctx.measureText(testLine).width;
-
     if (testWidth > maxWidth && line !== '') {
       lines.push(line.trim());
-      line = word + ' ';
+      line = words[i] + ' ';
     } else {
       line = testLine;
     }
-  });
-
-  if (line) {
-    lines.push(line.trim());
   }
+  if (line) lines.push(line.trim());
 
-  lines.forEach((lineText, i) => {
-    let currentX = x;
-    const parts = lineText.split(/(\s+|\d+)/).filter(p => p.trim() !== '');
+  // Render each line
+  lines.forEach((lineText, lineIndex) => {
+    const parts = lineText.split(/(\d+)/).filter(p => p !== '');
+    let totalWidth = 0;
 
-    parts.forEach(word => {
-      const isNumber = /^\d+$/.test(word);
-      ctx.font = `70px ${isNumber ? 'Arial' : '"Urdu Najd V3"'}`;
-      ctx.fillText(word, currentX, y + i * lineHeight);
-      currentX -= ctx.measureText(word).width;
+    // First, calculate total width of the line
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : fontFamily}`;
+      totalWidth += ctx.measureText(part).width;
+    });
+
+    // Start from calculated X to center the whole line
+    let startX = x + totalWidth / 2;
+
+    // Draw parts from right to left
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : fontFamily}`;
+      const partWidth = ctx.measureText(part).width;
+      startX -= partWidth;
+      ctx.fillText(part, startX, y + lineIndex * lineHeight);
     });
   });
 }
