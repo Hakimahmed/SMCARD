@@ -234,22 +234,16 @@ function generateNewsCanvas() {
 
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 775, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
 
-
-
-    
-    logoImage.onload = () => {
-      newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-    };
     if (logoImage.complete) {
       newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
+    } else {
+      logoImage.onload = () => {
+        newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
+      };
     }
   };
   canvasImage.src = canvas.toDataURL();
 }
-  }
-
-
-  
 
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
   const lineHeight = fontSize * 1.6;
@@ -257,19 +251,17 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   let lines = [];
   let currentLine = "";
 
-  // Set drop shadow properties
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; // Shadow color (semi-transparent black)
-  ctx.shadowBlur = 8; // Blur radius
-  ctx.shadowOffsetX = 2; // Horizontal shadow offset
-  ctx.shadowOffsetY = 2; // Vertical shadow offset
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
 
-  // Build lines based on visual width
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = ${fontWeight} ${fontSize}px ${urduFont};
+    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
     const testWidth = ctx.measureText(testLine).width;
 
     if (testWidth > maxWidth && currentLine !== "") {
@@ -281,115 +273,40 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
   if (currentLine) lines.push(currentLine);
 
-  // Render each line RTL and centered
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const parts = line.split(/(\d+)/).filter(Boolean);
     let totalLineWidth = 0;
 
-    // Measure width of all parts
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
       totalLineWidth += ctx.measureText(part).width;
     });
 
-    // Set starting X from right side to center the full line
     let x = centerX + totalLineWidth / 2;
 
-    // Draw parts right-to-left
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
     }
   }
 
-  // Reset shadow properties to avoid affecting other parts of the canvas
   ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
   ctx.shadowBlur = 0;
-   ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-      ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
-      ctx.direction = 'rtl'; // Set text direction to RTL
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.direction = 'rtl';
 }
 
-
-
-
-
-let isDragging = false;
-let startX, startY;
-
-// Drag Start
-canvas.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startX = e.offsetX;
-  startY = e.offsetY;
-});
-
-// Drag End
-canvas.addEventListener('mouseup', () => {
-  isDragging = false;
-});
-
-// Drag Move
-canvas.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const dx = e.offsetX - startX;
-  const dy = e.offsetY - startY;
-  startX = e.offsetX;
-  startY = e.offsetY;
-  offsetX += dx;
-  offsetY += dy;
-  drawImage();
-});
-
-// Mouse Wheel Zoom
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-
-  const zoomFactor = 1.1;
-  const mouseX = e.offsetX;
-  const mouseY = e.offsetY;
-
-  const direction = e.deltaY > 0 ? -1 : 1;
-  const factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
-
-  // Clamp scale between 0.1 and 5
-  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  factor = newScale / scale;
-
-  offsetX -= (mouseX - offsetX) * (factor - 1);
-  offsetY -= (mouseY - offsetY) * (factor - 1);
-  scale = newScale;
-
-  drawImage();
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
-  wordCounter.textContent = Words: ${words.length} / ${maxWords};
+  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
 
   if (words.length > maxWords) {
     input.style.border = '2px solid red';
@@ -418,8 +335,52 @@ downloadNewsButton.addEventListener('click', () => {
   link.href = newsCanvas.toDataURL();
   link.click();
 });
-</script>
 
+// Drag and Zoom
+let isDragging = false;
+let startX, startY;
+
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.offsetX;
+  startY = e.offsetY;
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.offsetX - startX;
+  const dy = e.offsetY - startY;
+  startX = e.offsetX;
+  startY = e.offsetY;
+  offsetX += dx;
+  offsetY += dy;
+  drawImage();
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+
+  const zoomFactor = 1.1;
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  const direction = e.deltaY > 0 ? -1 : 1;
+  let factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
+
+  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
+  factor = newScale / scale;
+
+  offsetX -= (mouseX - offsetX) * (factor - 1);
+  offsetY -= (mouseY - offsetY) * (factor - 1);
+  scale = newScale;
+
+  drawImage();
+});
+</script>
 
 </body>
 </html>
