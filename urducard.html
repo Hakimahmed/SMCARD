@@ -249,11 +249,13 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
+  ctx.textAlign = "right";
+  ctx.direction = "rtl";
 
   // Build lines based on visual width
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = ${fontWeight} ${fontSize}px ${urduFont};
+    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
     const testWidth = ctx.measureText(testLine).width;
 
     if (testWidth > maxWidth && currentLine !== "") {
@@ -274,22 +276,20 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
     // Measure width of all parts
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
       totalLineWidth += ctx.measureText(part).width;
     });
 
-    // Set starting X from right side to center the full line
+    // Start drawing from center to left (RTL)
     let x = centerX + totalLineWidth / 2;
 
-    // Draw parts right-to-left
-    for (let j = 0; j < parts.length; j++) {
-      const part = parts[j];
+    parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
-    }
+    });
   }
 }
 
@@ -366,7 +366,7 @@ canvas.addEventListener('wheel', (e) => {
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
-  wordCounter.textContent = Words: ${words.length} / ${maxWords};
+  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
 
   if (words.length > maxWords) {
     input.style.border = '2px solid red';
