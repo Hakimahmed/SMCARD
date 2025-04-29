@@ -232,7 +232,7 @@ function generateNewsCanvas() {
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
 
-    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 800, 900, 70, 'normal', 'Urdu Najd V3', '#006163');
+    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 850, 900, 70, 'normal', 'Urdu Najd V3', '#006163');
 
     const logoX = newsCanvas.width - 115;
     const logoY = 90;
@@ -299,10 +299,11 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
 
   // Reset shadow properties to avoid affecting other parts of the canvas
-  ctx.shadowColor = 'transparent';
+  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
   ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
+   ctx.shadowOffsetX = shadowOffset; // Shadow offset X
+      ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
+      ctx.direction = 'rtl'; // Set text direction to RTL
 }
 
 
