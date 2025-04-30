@@ -241,57 +241,54 @@ function generateNewsCanvas() {
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-  const lineHeight = fontSize * 1.6;
+const drawHeadline = (ctx, text, x = newsCanvas.width / 2, y = 1450) => {
   const words = text.trim().split(/\s+/);
+  const lineHeight = 110;
+  let line = '';
+  let yPos = y;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.shadowBlur = 0;
+  ctx.direction = 'rtl';
+  ctx.fillStyle = '#006163';
+
   let lines = [];
-  let currentLine = "";
-
-  ctx.fillStyle = color;
-  ctx.textBaseline = "top";
-  ctx.textAlign = "right";
-  ctx.direction = "rtl";
-
-  // Build lines based on visual width
   for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = `${fontWeight} ${fontSize}px '${urduFont}'`;
-    const testWidth = ctx.measureText(testLine).width;
+    const word = words[i];
+    const isNumber = /^\d+$/.test(word);
+    const font = isNumber ? '70px Arial' : '88px "Urdu Najd V3", serif';
+    ctx.font = font;
 
-    if (testWidth > maxWidth && currentLine !== "") {
-      lines.push(currentLine);
-      currentLine = words[i];
+    const testLine = line + word + ' ';
+    const width = ctx.measureText(testLine).width;
+
+    if (width > newsCanvas.width - 120 && line !== '') {
+      lines.push(line.trim());
+      line = word + ' ';
     } else {
-      currentLine = testLine;
+      line = testLine;
     }
   }
-  if (currentLine) lines.push(currentLine);
+  if (line) lines.push(line.trim());
 
-  // Render each line RTL and centered
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const parts = line.split(/(\d+)/).filter(Boolean);
-    let totalLineWidth = 0;
-
-    // Measure width of all parts
-    parts.forEach(part => {
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
-      totalLineWidth += ctx.measureText(part).width;
-    });
-
-    // Start drawing from center to left (RTL)
-    let x = centerX + totalLineWidth / 2;
-
-    parts.forEach(part => {
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px '${isNumber ? 'Arial' : urduFont}'`;
-      const partWidth = ctx.measureText(part).width;
-      x -= partWidth;
-      ctx.fillText(part, x, startY + i * lineHeight);
-    });
-  }
-}
+  // Final rendering
+  lines.forEach((ln, idx) => {
+    const wordsInLine = ln.split(/\s+/);
+    let lineText = '';
+    for (let w of wordsInLine) {
+      ctx.font = /^\d+$/.test(w) ? '70px Arial' : '88px "Urdu Najd V3", serif';
+      lineText = w;
+      ctx.fillText(w, x, yPos);
+      const wWidth = ctx.measureText(w + ' ').width;
+      x -= wWidth; // move to left for next word in RTL
+    }
+    x = newsCanvas.width / 2; // reset x
+    yPos += lineHeight;
+  });
+};
 
 
 
