@@ -1,107 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Crop & News Graphic Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Crop & News Graphic Generator</title>
 
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    /* NOTE: Urdu Najd V3 is not available on Google Fonts — make sure you're hosting it properly if used */
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', sans-serif;
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+    }
 
-  body {
-    background: #f4f6f8;
-    padding: 30px;
-    color: #333;
-  }
+    body {
+      background: #f4f6f8;
+      padding: 30px;
+      color: #333;
+    }
 
-  h1 {
-    text-align: center;
-    margin-bottom: 30px;
-    color: #006163;
-  }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #006163;
+    }
 
-  .container {
-    max-width: 1280px;
-    margin: 0 auto;
-  }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
 
-  #canvasContainer, #newsCanvasContainer {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-    overflow: hidden;
-    border: 1px solid #ccc;
-  }
+    #canvasContainer, #newsCanvasContainer {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
 
-  #canvasContainer {
-    width: 1200px;
-    height: 720px;
-  }
+    #canvasContainer {
+      width: 1200px;
+      height: 720px;
+    }
 
-  #newsCanvasContainer {
-    width: 1080px;
-    height: 1080px;
-    position: relative;
-  }
+    #newsCanvasContainer {
+      width: 1080px;
+      height: 1080px;
+      position: relative;
+    }
 
-  canvas {
-    display: block;
-    margin: auto;
-  }
+    canvas {
+      display: block;
+      margin: auto;
+    }
 
-  .controls {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-  button {
-    padding: 12px 24px;
-    margin: 5px;
-    border: none;
-    border-radius: 6px;
-    background-color: #006163;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
+    button {
+      padding: 12px 24px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #006163;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-  button:hover {
-    background-color: #004d4d;
-  }
+    button:hover {
+      background-color: #004d4d;
+    }
 
-  #headlineInput {
-    width: 80%;
-    padding: 12px;
-    font-size: 30px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin: 20px auto;
-    display: block;
-    font-family: 'Urdu Najd V3', serif;
-  }
+    #headlineInput {
+      width: 80%;
+      padding: 12px;
+      font-size: 30px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin: 20px auto;
+      display: block;
+      font-family: 'Urdu Najd V3', serif;
+    }
 
-  #wordCounter {
-    text-align: center;
-    margin-top: 8px;
-    font-size: 18px;
-    color: #006163;
-  }
+    #wordCounter {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 18px;
+      color: #006163;
+    }
 
-  .download-buttons {
-    margin-top: 20px;
-    text-align: center;
-  }
-</style>
+    .download-buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
@@ -238,7 +238,6 @@ function generateNewsCanvas() {
 }
 
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-
   const lineHeight = fontSize * 1.8;
   const words = text.trim().split(/\s+/);
   let lines = [];
@@ -249,7 +248,7 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
           
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = ${fontWeight} ${fontSize}px ${urduFont};
+    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
     const testWidth = ctx.measureText(testLine).width;
 
     if (testWidth > maxWidth && currentLine !== "") {
@@ -268,7 +267,7 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
       totalLineWidth += ctx.measureText(part).width;
     });
 
@@ -277,14 +276,14 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
-      ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
 
-      DROP SHADOW SETTINGS ADDED HERE
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    ctx.shadowBlur = 4;
-      
+      // Drop shadow settings
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      ctx.shadowBlur = 4;
+
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
@@ -292,49 +291,10 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
 }
 
-let isDragging = false;
-let startX, startY;
-
-canvas.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startX = e.offsetX;
-  startY = e.offsetY;
-});
-
-canvas.addEventListener('mouseup', () => {
-  isDragging = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const dx = e.offsetX - startX;
-  const dy = e.offsetY - startY;
-  startX = e.offsetX;
-  startY = e.offsetY;
-  offsetX += dx;
-  offsetY += dy;
-  drawImage();
-});
-
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const zoomFactor = 1.1;
-  const mouseX = e.offsetX;
-  const mouseY = e.offsetY;
-  const direction = e.deltaY > 0 ? -1 : 1;
-  let factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
-  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  factor = newScale / scale;
-  offsetX -= (mouseX - offsetX) * (factor - 1);
-  offsetY -= (mouseY - offsetY) * (factor - 1);
-  scale = newScale;
-  drawImage();
-});
-
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
   const wordCounter = document.getElementById('wordCounter');
-  wordCounter.textContent = Words: ${words.length} / ${maxWords};
+  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
 
   if (words.length > maxWords) {
     input.style.border = '2px solid red';
