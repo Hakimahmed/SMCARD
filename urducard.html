@@ -238,7 +238,15 @@ function generateNewsCanvas() {
 }
 
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+  const lineHeight = fontSize * 1.8;
+  const words = text.trim().split(/\s+/);
+  let lines = [];
+  let currentLine = "";
+
+  ctx.fillStyle = color;
+  ctx.textBaseline = "top";
+          ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
       ctx.fillStyle = color;
       ctx.textAlign = 'center'; // Center align text horizontally
       ctx.textBaseline = 'bottom'; // Align text baseline to the bottom
@@ -247,13 +255,6 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
       ctx.shadowOffsetX = shadowOffset; // Shadow offset X
       ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
       ctx.direction = 'rtl'; // Set text direction to RTL
-  const lineHeight = fontSize * 1.8;
-  const words = text.trim().split(/\s+/);
-  let lines = [];
-  let currentLine = "";
-
-  ctx.fillStyle = color;
-  ctx.textBaseline = "top";
 
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
