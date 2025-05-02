@@ -7,7 +7,7 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-   @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
 
     * {
       box-sizing: border-box;
@@ -79,6 +79,11 @@
       background-color: #004d4d;
     }
 
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
     #headlineInput {
       width: 80%;
       padding: 12px;
@@ -101,12 +106,26 @@
       margin-top: 20px;
       text-align: center;
     }
+
+    .loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 100;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1>Image Crop & News Graphic Generator</h1>
+  <div class="loading" id="loadingIndicator">Processing...</div>
 
   <div id="canvasContainer">
     <canvas id="canvas" width="1200" height="720"></canvas>
@@ -118,7 +137,7 @@
     <button id="centerButton">Center Image</button>
   </div>
 
-  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
+  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="updateWordCount()">
   <div id="wordCounter">Words: 0 / 13</div>
 
   <div class="controls">
@@ -147,17 +166,37 @@ const fitLongestSideButton = document.getElementById('fitLongestSideButton');
 const centerButton = document.getElementById('centerButton');
 const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
+const loadingIndicator = document.getElementById('loadingIndicator');
 
+// Constants
+const MAX_WORDS = 13;
+const SHADOW_OFFSET = 2;
+
+// Images
 const backgroundImage = new Image();
 backgroundImage.src = 'bg.jpg';
+backgroundImage.onerror = () => console.error("Failed to load background image");
 
 const logoImage = new Image();
 logoImage.src = 'aaj-logo.png';
+logoImage.onerror = () => console.error("Failed to load logo image");
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
+let imagesLoaded = 0;
+
+// Check when both images are loaded
+function checkImagesLoaded() {
+  imagesLoaded++;
+  if (imagesLoaded === 2) {
+    console.log("All images loaded");
+  }
+}
+
+backgroundImage.onload = checkImagesLoaded;
+logoImage.onload = checkImagesLoaded;
 
 // Paste Image
 document.addEventListener('paste', (event) => {
@@ -166,7 +205,14 @@ document.addEventListener('paste', (event) => {
     if (item.type.indexOf('image') !== -1) {
       const blob = item.getAsFile();
       const reader = new FileReader();
-      reader.onload = (e) => loadImage(e.target.result);
+      reader.onload = (e) => {
+        loadingIndicator.style.display = 'block';
+        loadImage(e.target.result);
+      };
+      reader.onerror = () => {
+        loadingIndicator.style.display = 'none';
+        console.error("Error reading image");
+      };
       reader.readAsDataURL(blob);
     }
   }
@@ -175,7 +221,12 @@ document.addEventListener('paste', (event) => {
 function loadImage(src) {
   image = new Image();
   image.onload = function() {
+    loadingIndicator.style.display = 'none';
     fitByStretch();
+  };
+  image.onerror = function() {
+    loadingIndicator.style.display = 'none';
+    console.error("Failed to load pasted image");
   };
   image.src = src;
 }
@@ -184,15 +235,15 @@ function fitByStretch() {
   if (!image) return;
   offsetX = 0;
   offsetY = 0;
-  const canvasAspectRatio = 1200 / 720;
+  const canvasAspectRatio = canvas.width / canvas.height;
   const imageAspectRatio = image.width / image.height;
 
   if (imageAspectRatio > canvasAspectRatio) {
-    scale = 720 / image.height;
-    offsetX = (1200 - image.width * scale) / 2;
+    scale = canvas.height / image.height;
+    offsetX = (canvas.width - image.width * scale) / 2;
   } else {
-    scale = 1200 / image.width;
-    offsetY = (720 - image.height * scale) / 2;
+    scale = canvas.width / image.width;
+    offsetY = (canvas.height - image.height * scale) / 2;
   }
   drawImage();
 }
@@ -221,9 +272,41 @@ function drawImage() {
   ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
 }
 
-function generateNewsCanvas() {
+function updateWordCount() {
+  const text = headlineInput.value.trim();
+  const wordCount = countWords(text);
+  const wordCounter = document.getElementById('wordCounter');
+  
+  wordCounter.textContent = `Words: ${wordCount} / ${MAX_WORDS}`;
+
+  if (wordCount > MAX_WORDS) {
+    headlineInput.style.border = '2px solid red';
+    generateButton.disabled = true;
+  } else {
+    headlineInput.style.border = '1px solid #ccc';
+    generateButton.disabled = wordCount === 0;
+  }
+}
+
+function countWords(text) {
+  return text ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+}
+
+async function generateNewsCanvas() {
   const headline = headlineInput.value.trim();
-  if (!headline) return;
+  if (!headline || countWords(headline) > MAX_WORDS) return;
+
+  loadingIndicator.style.display = 'block';
+  
+  // Wait for fonts to load
+  await document.fonts.load('30px "Urdu Najd V3"');
+  
+  // Check if images are loaded
+  if (!backgroundImage.complete || !logoImage.complete) {
+    console.log("Waiting for images to load");
+    loadingIndicator.style.display = 'none';
+    return;
+  }
 
   newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
   newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
@@ -233,13 +316,18 @@ function generateNewsCanvas() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
     drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
+    loadingIndicator.style.display = 'none';
+  };
+  canvasImage.onerror = function() {
+    loadingIndicator.style.display = 'none';
+    console.error("Failed to load canvas image");
   };
   canvasImage.src = canvas.toDataURL();
 }
 
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
   const lineHeight = fontSize * 1.8;
-  const words = text.trim().split(/\s+/);
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
   let lines = [];
   let currentLine = "";
 
@@ -280,8 +368,8 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
       // Drop shadow settings
       ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-      ctx.shadowOffsetX = shadowOffset;
-      ctx.shadowOffsetY = shadowOffset;
+      ctx.shadowOffsetX = SHADOW_OFFSET;
+      ctx.shadowOffsetY = SHADOW_OFFSET;
       ctx.shadowBlur = 0;
 
       const partWidth = ctx.measureText(part).width;
@@ -291,20 +379,7 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   }
 }
 
-function limitWords(input, maxWords) {
-  const words = input.value.trim().split(/\s+/);
-  const wordCounter = document.getElementById('wordCounter');
-  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
-
-  if (words.length > maxWords) {
-    input.style.border = '2px solid red';
-    generateButton.disabled = true;
-  } else {
-    input.style.border = '1px solid #ccc';
-    generateButton.disabled = words.length === 0;
-  }
-}
-
+// Event Listeners
 generateButton.addEventListener('click', generateNewsCanvas);
 stretchButton.addEventListener('click', fitByStretch);
 fitLongestSideButton.addEventListener('click', fitOnLongestSide);
@@ -323,6 +398,9 @@ downloadNewsButton.addEventListener('click', () => {
   link.href = newsCanvas.toDataURL();
   link.click();
 });
+
+// Initialize
+updateWordCount();
 </script>
 
 </body>
