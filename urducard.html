@@ -280,9 +280,9 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
       // Drop shadow settings
       ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
-      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = shadowOffset;
+      ctx.shadowOffsetY = shadowOffset;
+      ctx.shadowBlur = 0;
 
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
