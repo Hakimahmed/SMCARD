@@ -245,9 +245,10 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-          
+  ctx.direction = "rtl"; // Important for Urdu
+
   for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine + (currentLine ? " " : "") + words[i];
+    const testLine = currentLine ? currentLine + " " + words[i] : words[i];
     ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
     const testWidth = ctx.measureText(testLine).width;
 
@@ -263,33 +264,36 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const parts = line.split(/(\d+)/).filter(Boolean);
-    let totalLineWidth = 0;
 
+    let totalLineWidth = 0;
     parts.forEach(part => {
       const isNumber = /^\d+$/.test(part);
       ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
       totalLineWidth += ctx.measureText(part).width;
     });
 
-    let x = centerX + totalLineWidth / 2;
+    let x = centerX + (totalLineWidth / 2);
 
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
       ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
 
-      // Drop shadow settings
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      // ✅ Updated Drop Shadow
+      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-      ctx.shadowBlur = 4;
+      ctx.shadowBlur = 1;
 
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
     }
   }
+
+  ctx.direction = "ltr"; // Reset for other canvas operations
 }
+
 
 function limitWords(input, maxWords) {
   const words = input.value.trim().split(/\s+/);
