@@ -7,7 +7,8 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
+    /* NOTE: Urdu Najd V3 is not available on Google Fonts — make sure you're hosting it properly if used */
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -86,7 +87,7 @@
       border-radius: 6px;
       margin: 20px auto;
       display: block;
-      font-family: 'Noto Nastaliq Urdu', serif;
+      font-family: 'Urdu Najd V3', serif;
     }
 
     #wordCounter {
@@ -198,7 +199,11 @@ function fitByStretch() {
 
 function fitOnLongestSide() {
   if (!image) return;
-  scale = (image.width > image.height) ? canvas.width / image.width : canvas.height / image.height;
+  if (image.width > image.height) {
+    scale = canvas.width / image.width;
+  } else {
+    scale = canvas.height / image.height;
+  }
   offsetX = (canvas.width - image.width * scale) / 2;
   offsetY = (canvas.height - image.height * scale) / 2;
   drawImage();
@@ -226,7 +231,7 @@ function generateNewsCanvas() {
   const canvasImage = new Image();
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', 'Noto Nastaliq Urdu', '#006163');
+    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
   };
   canvasImage.src = canvas.toDataURL();
@@ -240,7 +245,7 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
 
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-
+          
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
     ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
@@ -277,7 +282,7 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
       ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-      ctx.shadowBlur = 1;
+      ctx.shadowBlur = 4;
 
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
@@ -299,45 +304,6 @@ function limitWords(input, maxWords) {
     generateButton.disabled = words.length === 0;
   }
 }
-
-let isDragging = false;
-let startX, startY;
-
-canvas.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startX = e.offsetX;
-  startY = e.offsetY;
-});
-
-canvas.addEventListener('mouseup', () => {
-  isDragging = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const dx = e.offsetX - startX;
-  const dy = e.offsetY - startY;
-  startX = e.offsetX;
-  startY = e.offsetY;
-  offsetX += dx;
-  offsetY += dy;
-  drawImage();
-});
-
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const zoomFactor = 1.1;
-  const mouseX = e.offsetX;
-  const mouseY = e.offsetY;
-  const direction = e.deltaY > 0 ? -1 : 1;
-  let factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
-  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
-  factor = newScale / scale;
-  offsetX -= (mouseX - offsetX) * (factor - 1);
-  offsetY -= (mouseY - offsetY) * (factor - 1);
-  scale = newScale;
-  drawImage();
-});
 
 generateButton.addEventListener('click', generateNewsCanvas);
 stretchButton.addEventListener('click', fitByStretch);
