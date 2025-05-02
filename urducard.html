@@ -237,62 +237,44 @@ function generateNewsCanvas() {
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-
-  const lineHeight = fontSize * 1.8;
-  const words = text.trim().split(/\s+/);
-  let lines = [];
-  let currentLine = "";
-
+function drawWrappedText(ctx, text, x, y, maxWidth, fontSize, fontWeight, fontFamily, color, shadowOffset) {
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = color;
-  ctx.textBaseline = "top";
-          ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center'; // Center align text horizontally
-      ctx.textBaseline = 'bottom'; // Align text baseline to the bottom
-      ctx.shadowColor = 'rgba(0, 97, 99, 0.23)'; // Shadow color
-      ctx.shadowBlur = 0; // Shadow blur
-      ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-      ctx.shadowOffsetY = shadowOffset; // Shadow offset Y
-      ctx.direction = 'rtl'; // Set text direction to RTL
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  
+  // Apply drop shadow
+  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)'; // Shadow color
+  ctx.shadowBlur = 0;                        // No blur
+  ctx.shadowOffsetX = shadowOffset;         // Horizontal offset
+  ctx.shadowOffsetY = shadowOffset;         // Vertical offset
+
+  ctx.direction = 'rtl';
+
+  const words = text.split(' ');
+  let line = '';
+  let yPos = y;
+  const lineHeight = fontSize * 0.8;
+  let btMargin = 100;
 
   for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine + (currentLine ? " " : "") + words[i];
-    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
-    const testWidth = ctx.measureText(testLine).width;
+    const testLine = line + words[i] + ' ';
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
 
-    if (testWidth > maxWidth && currentLine !== "") {
-      lines.push(currentLine);
-      currentLine = words[i];
+    if (testWidth > maxWidth && i > 0) {
+      ctx.fillText(line.trim(), x, yPos);
+      line = words[i] + ' ';
+      yPos += lineHeight;
     } else {
-      currentLine = testLine;
+      line = testLine;
+      btMargin = 60;
     }
   }
-  if (currentLine) lines.push(currentLine);
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const parts = line.split(/(\d+)/).filter(Boolean);
-    let totalLineWidth = 0;
-
-    parts.forEach(part => {
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
-      totalLineWidth += ctx.measureText(part).width;
-    });
-
-    let x = centerX + totalLineWidth / 2;
-
-    for (let j = 0; j < parts.length; j++) {
-      const part = parts[j];
-      const isNumber = /^\d+$/.test(part);
-      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
-      const partWidth = ctx.measureText(part).width;
-      x -= partWidth;
-      ctx.fillText(part, x, startY + i * lineHeight);
-    }
-  }
+  ctx.fillText(line.trim(), x, yPos + btMargin);
 }
+
 
 let isDragging = false;
 let startX, startY;
