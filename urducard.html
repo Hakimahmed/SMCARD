@@ -231,7 +231,7 @@ function generateNewsCanvas() {
   const canvasImage = new Image();
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 800, 900, 55, 'normal', 'Urdu Najd V3', '#006163');
+    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 800, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
   };
   canvasImage.src = canvas.toDataURL();
