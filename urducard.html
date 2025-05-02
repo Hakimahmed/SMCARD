@@ -278,6 +278,13 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
       const part = parts[j];
       const isNumber = /^\d+$/.test(part);
       ctx.font = ${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont};
+
+      DROP SHADOW SETTINGS ADDED HERE
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur = 4;
+      
       const partWidth = ctx.measureText(part).width;
       x -= partWidth;
       ctx.fillText(part, x, startY + i * lineHeight);
