@@ -100,6 +100,8 @@
       margin: 20px auto;
       display: block;
       font-family: 'Urdu Najd V3', serif;
+      direction: rtl;
+      unicode-bidi: bidi-override;
     }
 
     #wordCounter {
@@ -125,10 +127,6 @@
       padding: 10px 20px;
       border-radius: 5px;
       z-index: 100;
-    }
-
-    .font-loading {
-      font-family: 'Roboto', sans-serif;
     }
   </style>
 </head>
@@ -208,11 +206,9 @@ function loadUrduFont() {
     document.fonts.add(font);
     urduFontLoaded = true;
     console.log("Urdu font loaded successfully");
-    // Update input field font once loaded
     headlineInput.style.fontFamily = URDU_FONT;
   }).catch(err => {
     console.error("Failed to load Urdu font:", err);
-    // Fallback to system font if Urdu font fails to load
     headlineInput.style.fontFamily = 'serif';
   });
 }
@@ -356,8 +352,8 @@ async function generateNewsCanvas() {
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
     
-    // Draw headline with Urdu Najd font only
-    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', URDU_FONT, '#006163');
+    // Draw headline with proper RTL Urdu text
+    drawWrappedUrduText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', URDU_FONT, '#006163');
     
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
     loadingIndicator.style.display = 'none';
@@ -369,43 +365,46 @@ async function generateNewsCanvas() {
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, fontFamily, color) {
+function drawWrappedUrduText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, fontFamily, color) {
   const lineHeight = fontSize * 1.8;
-  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-  let lines = [];
-  let currentLine = "";
-
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = "right"; // For proper Urdu text direction
-          
-  // Simple word wrapping for Urdu text
-  for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine ? words[i] + " " + currentLine : words[i];
-    const testWidth = ctx.measureText(testLine).width;
+  ctx.textAlign = "center"; // Center alignment for Urdu text
 
-    if (testWidth > maxWidth && currentLine !== "") {
-      lines.push(currentLine);
-      currentLine = words[i];
-    } else {
-      currentLine = testLine;
+  // Process text for RTL
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  const lines = [];
+  let currentLine = [];
+
+  // Break text into lines that fit maxWidth
+  for (let i = words.length - 1; i >= 0; i--) {
+    currentLine.unshift(words[i]);
+    const testLine = currentLine.join(' ');
+    const metrics = ctx.measureText(testLine);
+    
+    if (metrics.width > maxWidth && currentLine.length > 1) {
+      currentLine.shift(); // Remove the word that made it overflow
+      lines.push(currentLine.join(' '));
+      currentLine = [words[i]]; // Start new line with current word
     }
   }
-  if (currentLine) lines.push(currentLine);
+  
+  if (currentLine.length > 0) {
+    lines.push(currentLine.join(' '));
+  }
 
-  // Draw all lines with Urdu font
+  // Draw each line centered
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const x = centerX;
-
+    
     // Drop shadow settings
     ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
     ctx.shadowOffsetX = SHADOW_OFFSET;
     ctx.shadowOffsetY = SHADOW_OFFSET;
     ctx.shadowBlur = 0;
 
-    ctx.fillText(line, x, startY + i * lineHeight);
+    ctx.fillText(line, centerX, startY + (i * lineHeight));
   }
 }
 
