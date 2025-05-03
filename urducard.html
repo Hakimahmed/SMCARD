@@ -1,140 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Crop & News Graphic Generator</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Crop & News Graphic Generator</title>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Urdu+Najd+V3&display=swap');
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Roboto', sans-serif;
-    }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+  }
 
-    @font-face {
-      font-family: 'Urdu Najd V3';
-      src: url('UrduNajdv3.woff') format('woff');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
+  body {
+    background: #f4f6f8;
+    padding: 30px;
+    color: #333;
+  }
 
-    body {
-      background: #f4f6f8;
-      padding: 30px;
-      color: #333;
-    }
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #006163;
+  }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #006163;
-    }
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
 
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-    }
+  #canvasContainer, #newsCanvasContainer {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+  }
 
-    #canvasContainer, #newsCanvasContainer {
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      margin-bottom: 30px;
-      overflow: hidden;
-      border: 1px solid #ccc;
-    }
+  #canvasContainer {
+    width: 1200px;
+    height: 720px;
+  }
 
-    #canvasContainer {
-      width: 1200px;
-      height: 720px;
-    }
+  #newsCanvasContainer {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+  }
 
-    #newsCanvasContainer {
-      width: 1080px;
-      height: 1080px;
-      position: relative;
-    }
+  canvas {
+    display: block;
+    margin: auto;
+  }
 
-    canvas {
-      display: block;
-      margin: auto;
-    }
+  .controls {
+    text-align: center;
+    margin-bottom: 20px;
+  }
 
-    .controls {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+  button {
+    padding: 12px 24px;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    background-color: #006163;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
 
-    button {
-      padding: 12px 24px;
-      margin: 5px;
-      border: none;
-      border-radius: 6px;
-      background-color: #006163;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+  button:hover {
+    background-color: #004d4d;
+  }
 
-    button:hover {
-      background-color: #004d4d;
-    }
+  #headlineInput {
+    width: 80%;
+    padding: 12px;
+    font-size: 30px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin: 20px auto;
+    display: block;
+    font-family: 'Urdu Najd V3', serif;
+  }
 
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
+  #wordCounter {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 18px;
+    color: #006163;
+  }
 
-    #headlineInput {
-      width: 80%;
-      padding: 12px;
-      font-size: 30px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin: 20px auto;
-      display: block;
-      font-family: 'Urdu Najd V3', serif;
-      direction: rtl;
-      unicode-bidi: bidi-override;
-    }
-
-    #wordCounter {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 18px;
-      color: #006163;
-    }
-
-    .download-buttons {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .loading {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      z-index: 100;
-    }
-  </style>
+  .download-buttons {
+    margin-top: 20px;
+    text-align: center;
+  }
+</style>
 </head>
 <body>
 
 <div class="container">
   <h1>Image Crop & News Graphic Generator</h1>
-  <div class="loading" id="loadingIndicator">Processing...</div>
 
   <div id="canvasContainer">
     <canvas id="canvas" width="1200" height="720"></canvas>
@@ -146,7 +118,7 @@
     <button id="centerButton">Center Image</button>
   </div>
 
-  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="updateWordCount()">
+  <input type="text" dir="rtl" id="headlineInput" placeholder="Enter headline (Max 13 words)" oninput="limitWords(this, 13)">
   <div id="wordCounter">Words: 0 / 13</div>
 
   <div class="controls">
@@ -162,6 +134,7 @@
     <button id="downloadNewsButton">Download News Image</button>
   </div>
 </div>
+
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -174,56 +147,17 @@ const fitLongestSideButton = document.getElementById('fitLongestSideButton');
 const centerButton = document.getElementById('centerButton');
 const downloadCanvasButton = document.getElementById('downloadCanvasButton');
 const downloadNewsButton = document.getElementById('downloadNewsButton');
-const loadingIndicator = document.getElementById('loadingIndicator');
 
-// Constants
-const MAX_WORDS = 13;
-const SHADOW_OFFSET = 2;
-const URDU_FONT = 'Urdu Najd V3';
-
-// Images
 const backgroundImage = new Image();
 backgroundImage.src = 'bg.jpg';
-backgroundImage.onerror = () => console.error("Failed to load background image");
 
 const logoImage = new Image();
 logoImage.src = 'aaj-logo.png';
-logoImage.onerror = () => console.error("Failed to load logo image");
 
 let image = null;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
-let imagesLoaded = 0;
-let urduFontLoaded = false;
-
-// Load Urdu font
-function loadUrduFont() {
-  const font = new FontFace(URDU_FONT, 'url(UrduNajdv3.woff)');
-  
-  font.load().then(() => {
-    document.fonts.add(font);
-    urduFontLoaded = true;
-    console.log("Urdu font loaded successfully");
-    headlineInput.style.fontFamily = URDU_FONT;
-  }).catch(err => {
-    console.error("Failed to load Urdu font:", err);
-    headlineInput.style.fontFamily = 'serif';
-  });
-}
-
-// Check when both images are loaded
-function checkImagesLoaded() {
-  imagesLoaded++;
-  if (imagesLoaded === 2) {
-    console.log("All images loaded");
-  }
-}
-
-// Initialize font and image loading
-loadUrduFont();
-backgroundImage.onload = checkImagesLoaded;
-logoImage.onload = checkImagesLoaded;
 
 // Paste Image
 document.addEventListener('paste', (event) => {
@@ -232,14 +166,7 @@ document.addEventListener('paste', (event) => {
     if (item.type.indexOf('image') !== -1) {
       const blob = item.getAsFile();
       const reader = new FileReader();
-      reader.onload = (e) => {
-        loadingIndicator.style.display = 'block';
-        loadImage(e.target.result);
-      };
-      reader.onerror = () => {
-        loadingIndicator.style.display = 'none';
-        console.error("Error reading image");
-      };
+      reader.onload = (e) => loadImage(e.target.result);
       reader.readAsDataURL(blob);
     }
   }
@@ -248,12 +175,7 @@ document.addEventListener('paste', (event) => {
 function loadImage(src) {
   image = new Image();
   image.onload = function() {
-    loadingIndicator.style.display = 'none';
     fitByStretch();
-  };
-  image.onerror = function() {
-    loadingIndicator.style.display = 'none';
-    console.error("Failed to load pasted image");
   };
   image.src = src;
 }
@@ -262,15 +184,15 @@ function fitByStretch() {
   if (!image) return;
   offsetX = 0;
   offsetY = 0;
-  const canvasAspectRatio = canvas.width / canvas.height;
+  const canvasAspectRatio = 1200 / 720;
   const imageAspectRatio = image.width / image.height;
 
   if (imageAspectRatio > canvasAspectRatio) {
-    scale = canvas.height / image.height;
-    offsetX = (canvas.width - image.width * scale) / 2;
+    scale = 720 / image.height;
+    offsetX = (1200 - image.width * scale) / 2;
   } else {
-    scale = canvas.width / image.width;
-    offsetY = (canvas.height - image.height * scale) / 2;
+    scale = 1200 / image.width;
+    offsetY = (720 - image.height * scale) / 2;
   }
   drawImage();
 }
@@ -299,50 +221,9 @@ function drawImage() {
   ctx.drawImage(image, offsetX, offsetY, image.width * scale, image.height * scale);
 }
 
-function updateWordCount() {
-  const text = headlineInput.value.trim();
-  const wordCount = countWords(text);
-  const wordCounter = document.getElementById('wordCounter');
-  
-  wordCounter.textContent = `Words: ${wordCount} / ${MAX_WORDS}`;
-
-  if (wordCount > MAX_WORDS) {
-    headlineInput.style.border = '2px solid red';
-    generateButton.disabled = true;
-  } else {
-    headlineInput.style.border = '1px solid #ccc';
-    generateButton.disabled = wordCount === 0;
-  }
-}
-
-function countWords(text) {
-  return text ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
-}
-
-async function generateNewsCanvas() {
+function generateNewsCanvas() {
   const headline = headlineInput.value.trim();
-  if (!headline || countWords(headline) > MAX_WORDS) return;
-
-  loadingIndicator.style.display = 'block';
-  
-  // Wait for Urdu font to load
-  if (!urduFontLoaded) {
-    try {
-      await document.fonts.load(`30px "${URDU_FONT}"`);
-      urduFontLoaded = true;
-    } catch (err) {
-      console.error("Failed to load Urdu font:", err);
-      loadingIndicator.style.display = 'none';
-      return;
-    }
-  }
-  
-  // Check if images are loaded
-  if (!backgroundImage.complete || !logoImage.complete) {
-    console.log("Waiting for images to load");
-    loadingIndicator.style.display = 'none';
-    return;
-  }
+  if (!headline) return;
 
   newsCtx.clearRect(0, 0, newsCanvas.width, newsCanvas.height);
   newsCtx.drawImage(backgroundImage, 0, 0, newsCanvas.width, newsCanvas.height);
@@ -350,76 +231,113 @@ async function generateNewsCanvas() {
   const canvasImage = new Image();
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
-
-    // Calculate the vertical center Y point for the headline
-    const contentTop = 70;
-    const contentHeight = 611;
-    const centerY = contentTop + contentHeight / 2;
-
-    // Draw headline with proper RTL Urdu text (right-aligned)
-    drawRtlUrduText(newsCtx, headline, 1080 - 90, centerY, 900, 60, 'normal', URDU_FONT, '#006163');
-    
+    drawWrappedText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', 'Urdu Najd V3', '#006163');
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
-    loadingIndicator.style.display = 'none';
-  };
-  canvasImage.onerror = function() {
-    loadingIndicator.style.display = 'none';
-    console.error("Failed to load canvas image");
   };
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawRtlUrduText(ctx, text, rightX, startY, maxWidth, fontSize, fontWeight, fontFamily, color) {
+function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
+
   const lineHeight = fontSize * 1.8;
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  const words = text.trim().split(/\s+/);
+  let lines = [];
+  let currentLine = "";
+
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-  ctx.textAlign = "right"; // Right alignment for RTL text
+          
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine + (currentLine ? " " : "") + words[i];
+    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
+    const testWidth = ctx.measureText(testLine).width;
 
-  // Process text for RTL wrapping
-  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-  const lines = [];
-  let currentLine = [];
-  let currentWidth = 0;
-
-  // Build lines from right to left
-  for (let i = words.length - 1; i >= 0; i--) {
-    const word = words[i];
-    const wordWidth = ctx.measureText(word).width;
-    const spaceWidth = currentLine.length > 0 ? ctx.measureText(' ').width : 0;
-
-    if (currentWidth + wordWidth + spaceWidth > maxWidth && currentLine.length > 0) {
-      lines.push(currentLine.join(' '));
-      currentLine = [word];
-      currentWidth = wordWidth;
+    if (testWidth > maxWidth && currentLine !== "") {
+      lines.push(currentLine);
+      currentLine = words[i];
     } else {
-      if (currentLine.length > 0) {
-        currentWidth += spaceWidth;
-      }
-      currentLine.unshift(word);
-      currentWidth += wordWidth;
+      currentLine = testLine;
     }
   }
+  if (currentLine) lines.push(currentLine);
 
-  if (currentLine.length > 0) {
-    lines.push(currentLine.join(' '));
-  }
-
-  // Draw lines from top to bottom (right-aligned)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
-    // Drop shadow settings
-    ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-    ctx.shadowOffsetX = SHADOW_OFFSET;
-    ctx.shadowOffsetY = SHADOW_OFFSET;
-    ctx.shadowBlur = 0;
+    const parts = line.split(/(\d+)/).filter(Boolean);
+    let totalLineWidth = 0;
 
-    ctx.fillText(line, rightX, startY + (i * lineHeight));
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
+      totalLineWidth += ctx.measureText(part).width;
+    });
+
+    let x = centerX + totalLineWidth / 2;
+
+    for (let j = 0; j < parts.length; j++) {
+      const part = parts[j];
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
+      const partWidth = ctx.measureText(part).width;
+      x -= partWidth;
+      ctx.fillText(part, x, startY + i * lineHeight);
+    }
   }
 }
 
-// Event Listeners
+let isDragging = false;
+let startX, startY;
+
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.offsetX;
+  startY = e.offsetY;
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.offsetX - startX;
+  const dy = e.offsetY - startY;
+  startX = e.offsetX;
+  startY = e.offsetY;
+  offsetX += dx;
+  offsetY += dy;
+  drawImage();
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const zoomFactor = 1.1;
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+  const direction = e.deltaY > 0 ? -1 : 1;
+  let factor = direction > 0 ? zoomFactor : 1 / zoomFactor;
+  const newScale = Math.max(0.1, Math.min(scale * factor, 5));
+  factor = newScale / scale;
+  offsetX -= (mouseX - offsetX) * (factor - 1);
+  offsetY -= (mouseY - offsetY) * (factor - 1);
+  scale = newScale;
+  drawImage();
+});
+
+function limitWords(input, maxWords) {
+  const words = input.value.trim().split(/\s+/);
+  const wordCounter = document.getElementById('wordCounter');
+  wordCounter.textContent = `Words: ${words.length} / ${maxWords}`;
+
+  if (words.length > maxWords) {
+    input.style.border = '2px solid red';
+    generateButton.disabled = true;
+  } else {
+    input.style.border = '1px solid #ccc';
+    generateButton.disabled = words.length === 0;
+  }
+}
+
 generateButton.addEventListener('click', generateNewsCanvas);
 stretchButton.addEventListener('click', fitByStretch);
 fitLongestSideButton.addEventListener('click', fitOnLongestSide);
@@ -438,12 +356,7 @@ downloadNewsButton.addEventListener('click', () => {
   link.href = newsCanvas.toDataURL();
   link.click();
 });
-
-// Initialize
-updateWordCount();
 </script>
-
-
 
 </body>
 </html>
