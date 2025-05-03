@@ -249,10 +249,10 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   ctx.textBaseline = "top";
 
   // Drop shadow styles
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.shadowBlur = 4;
+  ctx.shadowColor = 'rgba(0, 97, 99, 0.25)';
+  ctx.shadowOffsetX = shadowOffset; // Shadow offset X
+  ctx.shadowOffsetY = shadowOffset; // Shadow offset X
+  ctx.shadowBlur = 0;
 
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
