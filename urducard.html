@@ -244,16 +244,16 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
   let lines = [];
   let currentLine = "";
 
+  // Set fill and shadow styles
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
 
-
   // Drop shadow styles
-  ctx.shadowColor = 'rgba(0, 97, 99, 0.23)';
-  ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-  ctx.shadowOffsetY = shadowOffset; // Shadow offset X
-  ctx.shadowBlur = 0;
-          
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.shadowBlur = 4;
+
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
     ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
@@ -291,6 +291,59 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
     }
   }
 }
+
+
+
+
+  
+/*function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
+
+  const lineHeight = fontSize * 1.8;
+  const words = text.trim().split(/\s+/);
+  let lines = [];
+  let currentLine = "";
+
+  ctx.fillStyle = color;
+  ctx.textBaseline = "top";
+
+          
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine + (currentLine ? " " : "") + words[i];
+    ctx.font = `${fontWeight} ${fontSize}px ${urduFont}`;
+    const testWidth = ctx.measureText(testLine).width;
+
+    if (testWidth > maxWidth && currentLine !== "") {
+      lines.push(currentLine);
+      currentLine = words[i];
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const parts = line.split(/(\d+)/).filter(Boolean);
+    let totalLineWidth = 0;
+
+    parts.forEach(part => {
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
+      totalLineWidth += ctx.measureText(part).width;
+    });
+
+    let x = centerX + totalLineWidth / 2;
+
+    for (let j = 0; j < parts.length; j++) {
+      const part = parts[j];
+      const isNumber = /^\d+$/.test(part);
+      ctx.font = `${fontWeight} ${fontSize}px ${isNumber ? 'Arial' : urduFont}`;
+      const partWidth = ctx.measureText(part).width;
+      x -= partWidth;
+      ctx.fillText(part, x, startY + i * lineHeight);
+    }
+  }
+} */
 
 let isDragging = false;
 let startX, startY;
