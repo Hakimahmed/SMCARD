@@ -352,8 +352,8 @@ async function generateNewsCanvas() {
   canvasImage.onload = function() {
     newsCtx.drawImage(canvasImage, 25, 70, 1030, 611);
     
-    // Draw headline with proper RTL Urdu text
-    drawWrappedUrduText(newsCtx, headline, newsCanvas.width / 2, 770, 900, 60, 'normal', URDU_FONT, '#006163');
+    // Draw headline with proper RTL Urdu text (right-aligned)
+    drawRtlUrduText(newsCtx, headline, 1080 - 90, 770, 900, 60, 'normal', URDU_FONT, '#006163');
     
     newsCtx.drawImage(logoImage, newsCanvas.width - 115, 90, 115, 115);
     loadingIndicator.style.display = 'none';
@@ -365,36 +365,43 @@ async function generateNewsCanvas() {
   canvasImage.src = canvas.toDataURL();
 }
 
-function drawWrappedUrduText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, fontFamily, color) {
+function drawRtlUrduText(ctx, text, rightX, startY, maxWidth, fontSize, fontWeight, fontFamily, color) {
   const lineHeight = fontSize * 1.8;
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
-  ctx.textAlign = "center"; // Center alignment for Urdu text
+  ctx.textAlign = "right"; // Right alignment for RTL text
 
-  // Process text for RTL
+  // Process text for RTL wrapping
   const words = text.trim().split(/\s+/).filter(word => word.length > 0);
   const lines = [];
   let currentLine = [];
+  let currentWidth = 0;
 
-  // Break text into lines that fit maxWidth
+  // Build lines from right to left
   for (let i = words.length - 1; i >= 0; i--) {
-    currentLine.unshift(words[i]);
-    const testLine = currentLine.join(' ');
-    const metrics = ctx.measureText(testLine);
-    
-    if (metrics.width > maxWidth && currentLine.length > 1) {
-      currentLine.shift(); // Remove the word that made it overflow
+    const word = words[i];
+    const wordWidth = ctx.measureText(word).width;
+    const spaceWidth = currentLine.length > 0 ? ctx.measureText(' ').width : 0;
+
+    if (currentWidth + wordWidth + spaceWidth > maxWidth && currentLine.length > 0) {
       lines.push(currentLine.join(' '));
-      currentLine = [words[i]]; // Start new line with current word
+      currentLine = [word];
+      currentWidth = wordWidth;
+    } else {
+      if (currentLine.length > 0) {
+        currentWidth += spaceWidth;
+      }
+      currentLine.unshift(word);
+      currentWidth += wordWidth;
     }
   }
-  
+
   if (currentLine.length > 0) {
     lines.push(currentLine.join(' '));
   }
 
-  // Draw each line centered
+  // Draw lines from top to bottom (right-aligned)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
@@ -404,7 +411,7 @@ function drawWrappedUrduText(ctx, text, centerX, startY, maxWidth, fontSize, fon
     ctx.shadowOffsetY = SHADOW_OFFSET;
     ctx.shadowBlur = 0;
 
-    ctx.fillText(line, centerX, startY + (i * lineHeight));
+    ctx.fillText(line, rightX, startY + (i * lineHeight));
   }
 }
 
