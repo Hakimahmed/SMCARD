@@ -238,21 +238,19 @@ function generateNewsCanvas() {
 }
 
 function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
-
   const lineHeight = fontSize * 1.8;
   const words = text.trim().split(/\s+/);
   let lines = [];
   let currentLine = "";
 
-  // Set fill and shadow styles
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
 
   // Drop shadow styles
-  ctx.shadowColor = 'rgba(0, 97, 99, 0.25)';
-  ctx.shadowOffsetX = shadowOffset; // Shadow offset X
-  ctx.shadowOffsetY = shadowOffset; // Shadow offset X
-  ctx.shadowBlur = 0;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.shadowBlur = 4;
 
   for (let i = 0; i < words.length; i++) {
     const testLine = currentLine + (currentLine ? " " : "") + words[i];
@@ -290,10 +288,11 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWei
       ctx.fillText(part, x, startY + i * lineHeight);
     }
   }
+
+  // Reset shadow after drawing
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
 }
-
-
-
 
   
 /*function drawWrappedText(ctx, text, centerX, startY, maxWidth, fontSize, fontWeight, urduFont, color) {
